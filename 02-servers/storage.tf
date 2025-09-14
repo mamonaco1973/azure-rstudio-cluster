@@ -41,7 +41,7 @@ resource "azurerm_storage_container" "scripts" {
 locals {
   ad_join_script = templatefile("./scripts/ad_join.ps1.template", {
     vault_name  = data.azurerm_key_vault.ad_key_vault.name
-    domain_fqdn = "mcloud.mikecloud.com"
+    domain_fqdn = var.dns_zone
     nfs_gateway = azurerm_network_interface.nfs_gateway_nic.ip_configuration[0].private_ip_address
   })
 }
