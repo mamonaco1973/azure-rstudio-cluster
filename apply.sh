@@ -57,7 +57,7 @@ cd 02-servers
 
 # Query Azure for the Key Vault created in Phase 1 (first matching "ad-key-vault*")
 vault=$(az keyvault list \
-  --resource-group mcloud-project-rg \
+  --resource-group rstduio-project-rg \
   --query "[?starts_with(name, 'ad-key-vault')].name | [0]" \
   --output tsv)
 

@@ -25,7 +25,7 @@ set -e  # Exit immediately if any command fails
 cd 02-servers
 
 vault=$(az keyvault list \
-  --resource-group mcloud-project-rg \
+  --resource-group rstudio-project-rg \
   --query "[?starts_with(name, 'ad-key-vault')].name | [0]" \
   --output tsv)
 
