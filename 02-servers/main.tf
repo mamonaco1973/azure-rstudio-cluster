@@ -33,7 +33,7 @@ data "azurerm_client_config" "current" {}
 variable "resource_group_name" {
   description = "The name of the Azure Resource Group"
   type        = string
-  default     = "mcloud-project-rg"
+  default     = "rstudio-project-rg"
 }
 
 # --------------------------------------------------------------------------------------------------
