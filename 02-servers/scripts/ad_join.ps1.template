@@ -44,7 +44,7 @@ Add-Computer -DomainName "${domain_fqdn}" -Credential $cred -Force
 # ------------------------------------------------------------
 
 Write-Output "Add users to the Remote Desktop Users Group"
-$domainGroup = "MCLOUD\mcloud-users"
+$domainGroup = "RSTUDIO\rstudio-users"
 $maxRetries = 10
 $retryDelay = 30
 
@@ -52,7 +52,7 @@ for ($i=1; $i -le $maxRetries; $i++) {
     try {
         Add-LocalGroupMember -Group "Remote Desktop Users" -Member $domainGroup -ErrorAction Stop
         Write-Output "SUCCESS: Added $domainGroup to Remote Desktop Users"
-        break
+        breaks
     } catch {
         Write-Output "WARN: Attempt $i failed - waiting $retryDelay seconds..."
         Start-Sleep -Seconds $retryDelay
