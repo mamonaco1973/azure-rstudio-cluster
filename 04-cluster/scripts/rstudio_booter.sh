@@ -23,7 +23,7 @@ mount /home
 az login --identity --allow-no-subscriptions
 secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name ${vault_name} --query value -o tsv)
 admin_password=$(echo "$secretsJson" | jq -r '.password')
-admin_username="${netbios}\\Admin"
+admin_username=$(echo "$secretsJson" | jq -r '.username')
 
 # Join the Active Directory domain using the `realm` command.
 # - ${domain_fqdn}: The fully qualified domain name (FQDN) of the AD domain.
