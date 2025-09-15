@@ -89,12 +89,12 @@ cd 03-packer
 
 packer init .                                       # Initialize Packer plugins
 packer build \
-  -var="client_id=$ARM_CLIENT_ID" \                 # Service principal client ID
-  -var="client_secret=$ARM_CLIENT_SECRET" \         # Service principal client secret
-  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \     # Azure subscription ID
-  -var="tenant_id=$ARM_TENANT_ID" \                 # Azure tenant ID
-  -var="resource_group=rstudio-project-rg" \        # Target resource group for image
-  rstudio_image.pkr.hcl                             # Packer HCL template for RStudio image
+  -var="client_id=$ARM_CLIENT_ID" \                 
+  -var="client_secret=$ARM_CLIENT_SECRET" \         
+  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \     
+  -var="tenant_id=$ARM_TENANT_ID" \                
+  -var="resource_group=rstudio-project-rg" \        
+  rstudio_image.pkr.hcl                            
 
 cd ..
 
