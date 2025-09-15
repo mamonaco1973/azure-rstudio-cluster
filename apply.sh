@@ -1,74 +1,75 @@
 #!/bin/bash
-# ==================================================================================================
+# ==============================================================================
 # Apply Script for RStudio Cluster Deployment on Azure
 #
 # Purpose:
-#   - Validates the environment and dependencies before provisioning.
+#   - Validates environment and dependencies before provisioning.
 #   - Deploys a complete RStudio cluster environment in **four phases**:
 #       1. Directory + Identity Layer:
-#          - Deploys Mini Active Directory (Samba 4), networking (VNet, subnets, NSGs),
-#            and Key Vault for credential storage.
+#          - Mini Active Directory (Samba 4)
+#          - Networking (VNet, subnets, NSGs)
+#          - Key Vault for credential storage
 #       2. Services Layer:
-#          - Provisions shared storage (Azure Files NFS), the NFS-Gateway VM (Linux),
-#            and an AD Admin Windows Server for domain management.
+#          - Azure Files NFS share
+#          - NFS-Gateway VM (Linux)
+#          - AD Admin Windows Server
 #       3. Image Layer:
-#          - Uses Packer to build a custom RStudio VM image with R + RStudio pre-installed.
+#          - Builds custom RStudio VM image with R + RStudio using Packer
 #       4. Cluster Layer:
-#          - Deploys an RStudio cluster via VM Scale Set (VMSS), joined to AD and backed by NFS.
+#          - Deploys RStudio cluster via VM Scale Set (VMSS)
+#          - Cluster joins AD and uses NFS backend
 #
 # Notes:
-#   - Assumes `az` (Azure CLI), `terraform`, and `packer` are installed and authenticated.
-#   - Assumes `check_env.sh` validates required environment variables and tools.
-#   - Secrets and credentials are stored in Azure Key Vault (Phase 1) and retrieved securely.
-#   - The latest RStudio image from Phase 3 is automatically discovered and used in Phase 4.
-# ==================================================================================================
+#   - Requires `az` (Azure CLI), `terraform`, and `packer` installed/authenticated.
+#   - `check_env.sh` validates required environment variables and tools.
+#   - Secrets are stored in Key Vault (Phase 1) and retrieved securely.
+#   - Latest RStudio image from Phase 3 is discovered for Phase 4 deployment.
+# ==============================================================================
 
 set -e  # Exit immediately on any unhandled command failure
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Pre-flight Check: Validate environment
-# Runs custom environment validation script (`check_env.sh`) to ensure:
+# Runs `check_env.sh` to ensure:
 #   - Azure CLI is logged in and subscription is set
 #   - Terraform is installed
 #   - Packer is installed
 #   - Required variables (subscription ID, tenant ID, etc.) are present
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 ./check_env.sh
 if [ $? -ne 0 ]; then
   echo "ERROR: Environment check failed. Exiting."
   exit 1
 fi
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Phase 1: Deploy Directory + Identity Layer
 # - Deploys foundational resources:
 #     * Virtual network, subnets, and security groups
 #     * Key Vault for secrets storage
-#     * Samba-based Mini Active Directory Domain Controller (Linux VM)
-# --------------------------------------------------------------------------------------------------
+#     * Samba-based Mini Active Directory Domain Controller
+# ------------------------------------------------------------------------------
 cd 01-directory
 
-terraform init                        # Initialize Terraform working directory
-terraform apply -auto-approve         # Deploy VNet, Key Vault, Mini-AD, and supporting resources
+terraform init
+terraform apply -auto-approve
 
-# Exit if deployment fails
 if [ $? -ne 0 ]; then
   echo "ERROR: Terraform apply failed in 01-directory. Exiting."
   exit 1
 fi
 cd ..
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Phase 2: Deploy Services Layer
 # - Provisions supporting services:
 #     * Azure Files (NFS storage account)
 #     * NFS-Gateway VM (Linux, domain joined to Mini-AD)
 #     * AD Admin Windows Server (management and GUI tools)
-# - Discovers the Key Vault name from Phase 1 for secret retrieval.
-# --------------------------------------------------------------------------------------------------
+# - Discovers the Key Vault name from Phase 1 for secret retrieval
+# ------------------------------------------------------------------------------
 cd 02-servers
 
-# Query Azure for the Key Vault created in Phase 1 (first matching "ad-key-vault*")
 vault=$(az keyvault list \
   --resource-group rstudio-project-rg \
   --query "[?starts_with(name, 'ad-key-vault')].name | [0]" \
@@ -77,14 +78,14 @@ vault=$(az keyvault list \
 echo "NOTE: Key Vault for secrets is $vault"
 
 terraform init
-terraform apply -var="vault_name=$vault" -auto-approve   # Deploy NFS, gateway, and Windows Admin server
+terraform apply -var="vault_name=$vault" -auto-approve
 cd ..
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Phase 3: Build RStudio Image with Packer
-# - Uses Packer to build a custom Linux VM image with R + RStudio pre-installed.
-# - Authentication is handled with Azure service principal credentials.
-# --------------------------------------------------------------------------------------------------
+# - Uses Packer to build custom Linux VM image with R + RStudio.
+# - Auth handled via Azure service principal credentials.
+# ------------------------------------------------------------------------------
 cd 03-packer
 
 packer init .
@@ -98,15 +99,13 @@ packer build \
 
 cd ..
 
-# --------------------------------------------------------------------------------------------------
-# Phase 4: Deploy RStudio Cluster with a Virtual Machine Scale Set
-# - Discovers the latest RStudio image from Phase 3.
-# - Retrieves Ubuntu credentials from Key Vault.
-# - Discovers NFS storage account provisioned in Phase 2.
-# - Deploys RStudio VMSS cluster joined to Mini-AD and backed by NFS storage.
-# --------------------------------------------------------------------------------------------------
-
-# Discover the latest RStudio image in the resource group (prefix: rstudio_image)
+# ------------------------------------------------------------------------------
+# Phase 4: Deploy RStudio Cluster (VM Scale Set)
+# - Finds latest RStudio image from Phase 3
+# - Retrieves Ubuntu credentials from Key Vault
+# - Discovers NFS storage account from Phase 2
+# - Deploys RStudio cluster via VMSS (joined to AD, backed by NFS)
+# ------------------------------------------------------------------------------
 rstudio_image_name=$(az image list \
   --resource-group rstudio-project-rg \
   --query "[?starts_with(name, 'rstudio_image')]|sort_by(@, &name)[-1].name" \
@@ -114,28 +113,24 @@ rstudio_image_name=$(az image list \
 
 echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-project-rg."
 
-# Fail and exit if no image was found
 if [ -z "$rstudio_image_name" ]; then
-  echo "ERROR: No image with the prefix 'rstudio_image' was found in rstudio-project-rg. Exiting."
+  echo "ERROR: No image with prefix 'rstudio_image' in rstudio-project-rg."
   exit 1
 fi
 
-# Retrieve Ubuntu credentials from Key Vault
 secretsJson=$(az keyvault secret show \
   --name ubuntu-credentials \
   --vault-name ${vault} \
   --query value \
   -o tsv)
 
-password=$(echo "$secretsJson" | jq -r '.password')  # Extract password from secret JSON
+password=$(echo "$secretsJson" | jq -r '.password')
 
-# Discover the NFS storage account name from Phase 2
 storage_account=$(az storage account list \
   --resource-group rstudio-project-rg \
   --query "[?starts_with(name, 'nfs')].name | [0]" \
   -o tsv 2>/dev/null)
 
-# Deploy the RStudio Cluster (VMSS) with Terraform
 cd 04-cluster
 terraform init
 terraform apply -var="vault_name=$vault" \
