@@ -16,6 +16,21 @@
 
 set -e  # Exit immediately if any command fails
 
+#-------------------------------------------------------------------------------
+# Loop through and delete ALL images in 'rstudio-project-rg' (fire-and-forget)
+#-------------------------------------------------------------------------------
+
+az image list \
+  --resource-group "rstudio-project-rg" \
+  --query "[].name" \
+  -o tsv | while read -r IMAGE; do
+    echo "NOTE: Deleting image: $IMAGE"
+    az image delete \
+      --name "$IMAGE" \
+      --resource-group "rstudio-project-rg" \
+      || echo "WARNING: Failed to delete $IMAGE — skipping"
+done
+
 # --------------------------------------------------------------------------------------------------
 # Phase 1: Destroy Server Layer
 # - Destroys the Samba-based AD Domain Controller VM and dependent resources.

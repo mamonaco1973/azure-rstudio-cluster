@@ -84,3 +84,7 @@ packer build \
   rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
 
 cd ..   
+
+#-------------------------------------------------------------------------------
+# Phase 4: Build RStudio Cluster with a Virtual Machine Scale Set
+#-------------------------------------------------------------------------------
