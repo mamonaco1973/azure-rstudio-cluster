@@ -118,8 +118,8 @@ storage_account=$(az storage account list \
 cd 04-cluster                        # Enter Linux Packer template directory
 terraform init  
 terraform apply -var="vault_name=$vault"  \
-                -var="storage_account=$storage_account" \
-                -var="password=$password" \
+                -var="nfs_storage_account=$storage_account" \
+                -var="ubuntu_password=$password" \
                 -var="rstudio_image_name=$rstudio_image_name" \
                 -auto-approve   # Deploy VM, configure Samba AD
 cd ..
