@@ -86,7 +86,6 @@ source "azure-arm" "rstudio_image" {
   os_type         = "Linux"
 
   os_disk_size_gb           = 64                           # Root disk size
-  os_disk_managed_disk_type = "Premium_LRS"               # Premium SSD for I/O performance
 
   # Output managed image
   managed_image_name                 = "rstudio_img_${local.timestamp}" # Unique name
