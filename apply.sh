@@ -75,13 +75,13 @@ cd ..
 
 cd 03-packer                        # Enter Linux Packer template directory
 packer init .                       # Initialize Packer plugins
-# packer build \
-#   -var="client_id=$ARM_CLIENT_ID" \
-#   -var="client_secret=$ARM_CLIENT_SECRET" \
-#   -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
-#   -var="tenant_id=$ARM_TENANT_ID" \
-#   -var="resource_group=rstudio-project-rg" \
-#   rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
+packer build \
+  -var="client_id=$ARM_CLIENT_ID" \
+  -var="client_secret=$ARM_CLIENT_SECRET" \
+  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
+  -var="tenant_id=$ARM_TENANT_ID" \
+  -var="resource_group=rstudio-project-rg" \
+  rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
 
 cd ..   
 

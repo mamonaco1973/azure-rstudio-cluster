@@ -91,21 +91,20 @@ done
 
 # --------------------------------------------------------------------------------------------------
 # Phase 2: Destroy Server Layer
-# - Tears down the Mini-AD Domain Controller and supporting infra.
+# - Tears down the AD Admin VM and NFS Gateway
 # - References Key Vault to ensure secrets can be accessed for cleanup.
 # --------------------------------------------------------------------------------------------------
 cd 02-servers
 
 terraform init
 terraform destroy -var="vault_name=$vault" \
-                  -var="ubuntu_password=$password" \
                   -auto-approve
 
 cd ..
 
 # --------------------------------------------------------------------------------------------------
 # Phase 3: Destroy Directory Layer
-# - Removes foundational resources such as Key Vault and resource group–level roles.
+# - Removes foundational resources such as Mini-AD, Key Vault and resource group–level roles.
 # - Executed last to ensure no dependencies remain.
 # --------------------------------------------------------------------------------------------------
 cd 01-directory
