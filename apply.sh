@@ -67,3 +67,20 @@ terraform init   # Initialize Terraform in server layer
 terraform apply -var="vault_name=$vault" -auto-approve   # Deploy VM, configure Samba AD
 
 cd ..
+
+#-------------------------------------------------------------------------------
+# Phase 3: Build RStudio Image with Packer
+# - Uses Packer to create a custom VM image with RStudio and R pre-installed.
+#-------------------------------------------------------------------------------
+
+cd 03-packer                        # Enter Linux Packer template directory
+packer init .                       # Initialize Packer plugins
+packer build \
+  -var="client_id=$ARM_CLIENT_ID" \
+  -var="client_secret=$ARM_CLIENT_SECRET" \
+  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
+  -var="tenant_id=$ARM_TENANT_ID" \
+  -var="resource_group=rstudio-project-rg" \
+  rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
+
+cd ..   
