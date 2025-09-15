@@ -88,3 +88,17 @@ cd ..
 #-------------------------------------------------------------------------------
 # Phase 4: Build RStudio Cluster with a Virtual Machine Scale Set
 #-------------------------------------------------------------------------------
+
+rstudio_image_name=$(az image list \
+  --resource-group rstudio-project-rg \
+  --query "[?starts_with(name, 'rstudio_image')]|sort_by(@, &name)[-1].name" \
+  --output tsv)                     # Grab the latest rstudio_image by name sort
+
+echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-project-rg."
+
+# Fail if image was not found
+if [ -z "$rstudio_image_name" ]; then
+  echo "ERROR: No image with the prefix 'rstudio_image' was found in the resource group 'rstudio-project-rg'. Exiting."
+  exit 1
+fi
+

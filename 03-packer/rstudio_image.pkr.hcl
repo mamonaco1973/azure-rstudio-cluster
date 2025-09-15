@@ -88,7 +88,7 @@ source "azure-arm" "rstudio_image" {
   os_disk_size_gb           = 64                           # Root disk size
 
   # Output managed image
-  managed_image_name                 = "rstudio_img_${local.timestamp}" # Unique name
+  managed_image_name                 = "rstudio_image_${local.timestamp}" # Unique name
   managed_image_resource_group_name  = var.resource_group               # Target RG
 }
 
