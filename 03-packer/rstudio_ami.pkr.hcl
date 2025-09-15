@@ -93,7 +93,6 @@ source "azure-arm" "rstudio_image" {
   managed_image_resource_group_name  = var.resource_group               # Target RG
 }
 
-
 # ------------------------------------------------------------------------------------------
 # Build Block: Provisioning Scripts
 # - Executes provisioning scripts inside the temporary VM
