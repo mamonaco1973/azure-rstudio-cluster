@@ -75,13 +75,13 @@ cd ..
 
 cd 03-packer                        # Enter Linux Packer template directory
 packer init .                       # Initialize Packer plugins
-packer build \
-  -var="client_id=$ARM_CLIENT_ID" \
-  -var="client_secret=$ARM_CLIENT_SECRET" \
-  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
-  -var="tenant_id=$ARM_TENANT_ID" \
-  -var="resource_group=rstudio-project-rg" \
-  rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
+# packer build \
+#   -var="client_id=$ARM_CLIENT_ID" \
+#   -var="client_secret=$ARM_CLIENT_SECRET" \
+#   -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
+#   -var="tenant_id=$ARM_TENANT_ID" \
+#   -var="resource_group=rstudio-project-rg" \
+#   rstudio_image.pkr.hcl             # Packer HCL template for RStudio image
 
 cd ..   
 
@@ -101,4 +101,22 @@ if [ -z "$rstudio_image_name" ]; then
   echo "ERROR: No image with the prefix 'rstudio_image' was found in the resource group 'rstudio-project-rg'. Exiting."
   exit 1
 fi
+
+secretsJson=$(az keyvault secret show \
+  --name ubuntu-credentials \
+  --vault-name ${vault} \
+  --query value \
+  -o tsv)                           # Retrieve JSON secret with credentials
+
+password=$(echo "$secretsJson" | jq -r '.password')  # Extract `password` field from the secret JSON
+
+storage_account=$(az storage account list \
+  --resource-group rstudio-project-rg \
+  --query "[?starts_with(name, 'nfs')].name | [0]" \
+  -o tsv 2>/dev/null)
+
+cd 04-cluster                        # Enter Linux Packer template directory
+terraform init  
+terraform apply -var="vault_name=$vault" -auto-approve   # Deploy VM, configure Samba AD
+cd ..
 
