@@ -55,7 +55,7 @@ sudo sed -i 's|fallback_homedir = /home/%u@%d|fallback_homedir = /home/%u|' \
 sudo sed -i 's/^access_provider = ad$/access_provider = simple\nsimple_allow_groups = ${force_group}/' /etc/sssd/sssd.conf
 
 # Prevent XAuthority warnings for new AD users
-ln -s /efs /etc/skel/efs
+ln -s /nfs /etc/skel/nfs
 touch /etc/skel/.Xauthority
 chmod 600 /etc/skel/.Xauthority
 
@@ -79,7 +79,7 @@ echo "%linux-admins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/10-linux-a
 sudo sed -i 's/^\(\s*HOME_MODE\s*\)[0-9]\+/\10700/' /etc/login.defs
 
 # ---------------------------------------------------------------------------------
-# Section 7: Configure R Library Paths to include /efs/rlibs
+# Section 7: Configure R Library Paths to include /nfs/rlibs
 # ---------------------------------------------------------------------------------
 
 cat <<'EOF' | sudo tee /usr/lib/R/etc/Rprofile.site > /dev/null

@@ -176,7 +176,7 @@ read only = No
 inherit acls = Yes
 
 [nfs]
-comment = Mounted EFS area
+comment = Mounted NFS area
 path = /nfs
 read only = no
 guest ok = no
@@ -233,16 +233,21 @@ sudo sed -i 's/^\(\s*HOME_MODE\s*\)[0-9]\+/\10700/' /etc/login.defs
 
 # Trigger home directory creation for specific test accounts
 
+ln -s /nfs /etc/skel/nfs
+
 su -c "exit" rpatel
 su -c "exit" jsmith
 su -c "exit" akumar
 su -c "exit" edavis
 
 # Set NFS directory ownership and permissions
-chgrp mcloud-users /nfs
-chgrp mcloud-users /nfs/data
-chmod 770 /nfs
-chmod 770 /nfs/data
+chgrp ${force_group} /nfs
+chgrp ${force_group} /nfs/data
+chgrp ${force_group} /nfs/rlibs
+
+chmod 2770 /nfs
+chmod 2775 /nfs/rlibs
+chmod 2770 /nfs/data
 chmod 700 /home/*
 
 cd /nfs
