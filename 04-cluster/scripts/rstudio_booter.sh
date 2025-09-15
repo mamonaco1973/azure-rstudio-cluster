@@ -88,12 +88,12 @@ local({
   if (!dir.exists(userlib)) {
     dir.create(userlib, recursive = TRUE, showWarnings = FALSE)
   }
-  efs <- "/efs/rlibs"
-  .libPaths(c(userlib, efs, .libPaths()))
+  nfs <- "/nfs/rlibs"
+  .libPaths(c(userlib, nfs, .libPaths()))
 })
 EOF
 
-chgrp rstudio-admins /efs/rlibs
+chgrp rstudio-admins /nfs/rlibs
 
 # =================================================================================
 # End of Script
