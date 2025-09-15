@@ -87,14 +87,14 @@ cd ..
 # --------------------------------------------------------------------------------------------------
 cd 03-packer
 
-packer init .                                       # Initialize Packer plugins
+packer init .
 packer build \
-  -var="client_id=$ARM_CLIENT_ID" \                 
-  -var="client_secret=$ARM_CLIENT_SECRET" \         
-  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \     
-  -var="tenant_id=$ARM_TENANT_ID" \                
-  -var="resource_group=rstudio-project-rg" \        
-  rstudio_image.pkr.hcl                            
+  -var="client_id=$ARM_CLIENT_ID" \
+  -var="client_secret=$ARM_CLIENT_SECRET" \
+  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
+  -var="tenant_id=$ARM_TENANT_ID" \
+  -var="resource_group=rstudio-project-rg" \
+  rstudio_image.pkr.hcl
 
 cd ..
 
