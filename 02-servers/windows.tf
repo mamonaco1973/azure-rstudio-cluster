@@ -9,9 +9,9 @@
 # Generate a secure random password for the Windows VM 'adminuser' account
 # --------------------------------------------------------------------------------------------------
 resource "random_password" "win_adminuser_password" {
-  length           = 24        # 24-character password
-  special          = true      # Include special characters
-  override_special = "!@#$%"   # Limit special characters to this set
+  length           = 24      # 24-character password
+  special          = true    # Include special characters
+  override_special = "!@#$%" # Limit special characters to this set
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -52,15 +52,15 @@ resource "azurerm_network_interface" "windows_vm_nic" {
 # Provision the Windows Server Virtual Machine
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_windows_virtual_machine" "windows_ad_instance" {
-  name                = "win-ad-${random_string.vm_suffix.result}"   # VM name includes suffix
+  name                = "win-ad-${random_string.vm_suffix.result}" # VM name includes suffix
   location            = data.azurerm_resource_group.ad.location
   resource_group_name = data.azurerm_resource_group.ad.name
-  size                = "Standard_DS1_v2"                            # Small VM for demo/testing
+  size                = "Standard_DS1_v2" # Small VM for demo/testing
   admin_username      = "adminuser"
   admin_password      = random_password.win_adminuser_password.result
 
   # Attach NIC
-  network_interface_ids = [ azurerm_network_interface.windows_vm_nic.id ]
+  network_interface_ids = [azurerm_network_interface.windows_vm_nic.id]
 
   # Configure OS disk
   os_disk {

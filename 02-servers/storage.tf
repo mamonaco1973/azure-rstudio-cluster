@@ -9,10 +9,10 @@
 # Generate a random string for use in the storage account name
 # --------------------------------------------------------------------------------------------------
 resource "random_string" "storage_name" {
-  length  = 10     # 10 characters
-  upper   = false  # Lowercase only
-  special = false  # No special characters
-  numeric = true   # Include numbers
+  length  = 10    # 10 characters
+  upper   = false # Lowercase only
+  special = false # No special characters
+  numeric = true  # Include numbers
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -22,8 +22,8 @@ resource "azurerm_storage_account" "scripts_storage" {
   name                     = "vmscripts${random_string.storage_name.result}" # Ensure global uniqueness
   resource_group_name      = data.azurerm_resource_group.ad.name
   location                 = data.azurerm_resource_group.ad.location
-  account_tier             = "Standard"  # Standard = cost-effective option
-  account_replication_type = "LRS"       # Locally redundant storage (single region replication)
+  account_tier             = "Standard" # Standard = cost-effective option
+  account_replication_type = "LRS"      # Locally redundant storage (single region replication)
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ resource "azurerm_storage_account" "scripts_storage" {
 resource "azurerm_storage_container" "scripts" {
   name                  = "scripts"
   storage_account_id    = azurerm_storage_account.scripts_storage.id
-  container_access_type = "private"   # No anonymous access
+  container_access_type = "private" # No anonymous access
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ resource "azurerm_storage_blob" "ad_join_script" {
   name                   = "ad-join.ps1"
   storage_account_name   = azurerm_storage_account.scripts_storage.name
   storage_container_name = azurerm_storage_container.scripts.name
-  type                   = "Block"                          # Block blob (best for discrete files)
+  type                   = "Block" # Block blob (best for discrete files)
   source                 = local_file.ad_join_rendered.filename
   metadata = {
     force_update = "${timestamp()}" # Forces re-upload whenever timestamp changes
@@ -81,7 +81,7 @@ data "azurerm_storage_account_sas" "script_sas" {
   }
 
   services {
-    blob  = true   # Enable blob access
+    blob  = true # Enable blob access
     queue = false
     table = false
     file  = false
@@ -92,7 +92,7 @@ data "azurerm_storage_account_sas" "script_sas" {
   expiry = formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'", timeadd(timestamp(), "72h"))
 
   permissions {
-    read    = true   # Allow read access (required to download script)
+    read    = true # Allow read access (required to download script)
     write   = false
     delete  = false
     list    = false

@@ -11,8 +11,8 @@
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = true   # Immediately purge deleted Key Vaults (bypass soft-delete retention)
-      recover_soft_deleted_key_vaults = false  # Do not auto-recover previously deleted Key Vaults
+      purge_soft_delete_on_destroy    = true  # Immediately purge deleted Key Vaults (bypass soft-delete retention)
+      recover_soft_deleted_key_vaults = false # Do not auto-recover previously deleted Key Vaults
     }
   }
 }
