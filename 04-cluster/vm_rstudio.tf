@@ -73,4 +73,18 @@ resource "azurerm_linux_virtual_machine" "rstudio_vm" {
     realm           = var.realm
     force_group     = "rstudio-users"
   }))
+
+   # Enable system-assigned managed identity
+  identity {
+    type = "SystemAssigned"
+  }
+}
+
+# --------------------------------------------------------------------------------------------------
+# Grant VM's managed identity permission to read Key Vault secrets
+# --------------------------------------------------------------------------------------------------
+resource "azurerm_role_assignment" "vm_lnx_key_vault_secrets_user" {
+  scope                = data.azurerm_key_vault.ad_key_vault.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_linux_virtual_machine.rstudio_vm.identity[0].principal_id
 }
