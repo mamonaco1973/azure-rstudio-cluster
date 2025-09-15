@@ -47,7 +47,7 @@ resource "azurerm_linux_virtual_machine" "rstudio_vm" {
   name                            = "rstudio-vm"
   location                        = data.azurerm_resource_group.cluster_rg.location
   resource_group_name             = data.azurerm_resource_group.cluster_rg.name
-  size                            = "Standard_B1s"      # Lightweight VM size
+  size                            = "Standard_D2s_v5"   # Lightweight VM size
   admin_username                  = "ubuntu"            # Default login user
   admin_password                  = var.ubuntu_password # Securely injected password
   disable_password_authentication = false               # Enable password login (set true for SSH-only)
