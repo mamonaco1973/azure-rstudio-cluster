@@ -74,9 +74,9 @@ source "azure-arm" "rstudio_image" {
   tenant_id       = var.tenant_id
 
   # Base image (Ubuntu 24.04 LTS from Canonical)
-  image_offer     = "0001-com-ubuntu-server-noble"        # Correct Marketplace offer for 24.04
-  image_publisher = "canonical"
-  image_sku       = "24_04-lts"
+  image_offer     = "ubuntu-24_04-lts"                   # Marketplace offer name
+  image_publisher = "canonical"                          # Publisher: Canonical (Ubuntu)
+  image_sku       = "server"                             # Image SKU: server edition
   
   ssh_username    = "ubuntu"                              # Default Ubuntu username
 
