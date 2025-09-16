@@ -24,7 +24,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
       name      = "internal"                            # IP configuration name
       subnet_id = data.azurerm_subnet.cluster_subnet.id # Subnet ID
       application_gateway_backend_address_pool_ids = [
-        azurerm_application_gateway.rstudio_app_gateway.backend_address_pool[0].id # Backend pool ID
+        tolist(azurerm_application_gateway.rstudio_app_gateway.backend_address_pool)[0].id # Backend pool ID
       ]
     }
   }
