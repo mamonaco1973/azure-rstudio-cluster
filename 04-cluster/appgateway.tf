@@ -80,7 +80,7 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
     port                  = 8787       # RStudio Server port
     protocol              = "Http"
     request_timeout       = 30         # Timeout in seconds
-    probe_name            = "custom-health-probe"
+    host_name = azurerm_public_ip.rstudio_app_gateway_pip.fqdn # Use gateway FQDN
   }
 
   # Custom health probe
