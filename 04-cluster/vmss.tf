@@ -10,7 +10,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
   admin_password  = var.ubuntu_password
   disable_password_authentication = false
   source_image_id = data.azurerm_image.rstudio_image.id
-  zones           = ["1", "2"]                                 # Availability zones
 
   os_disk {
     caching              = "ReadWrite"    # OS disk caching option

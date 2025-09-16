@@ -11,8 +11,7 @@ resource "azurerm_public_ip" "rstudio_app_gateway_pip" {
   resource_group_name = data.azurerm_resource_group.cluster_rg.name              # Resource group for the public IP
   allocation_method   = "Static"                                                 # Allocation method for the public IP
   sku                 = "Standard"                                               # SKU of the public IP
-  domain_name_label   = "rstudio-cluster-${random_string.gateway_suffix.result}" # Unique DNS label
-  zones               = ["1", "2"]                                               # Availability zones for high availability
+  domain_name_label   = "rstudio-cluster-${random_string.gateway_suffix.result}" # Unique DNS label                                   # Availability zones for high availability
 }
 
 # Application Gateway
@@ -20,7 +19,6 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
   name                = "rstudio-app-gateway"                           # Name of the application gateway
   location            = data.azurerm_resource_group.cluster_rg.location # Azure region
   resource_group_name = data.azurerm_resource_group.cluster_rg.name     # Resource group for the application gateway
-  zones               = ["1", "2"]                                      # Availability zones for redundancy
 
   # SKU configuration
   sku {
