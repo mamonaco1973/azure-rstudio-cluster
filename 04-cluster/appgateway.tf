@@ -81,7 +81,7 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
     protocol              = "Http"
     request_timeout       = 30         # Timeout in seconds
     probe_name            = "custom-health-probe"
-    pick_host_name_from_backend_address = true
+    pick_host_name_from_backend_address = true  # Use backend hostnames
   }
 
   # Custom health probe
@@ -92,7 +92,8 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
     interval            = 5                    # Check every 5 seconds
     timeout             = 5                    # 5-second response timeout
     unhealthy_threshold = 5                    # Mark unhealthy after five failures
-    port                = 8787                 # RStudio Server port
+    port                = 8787                  # RStudio Server port
+    pick_host_name_from_backend_http_settings = true # Use backend hostnames
   }
 
   # HTTP listener configuration
