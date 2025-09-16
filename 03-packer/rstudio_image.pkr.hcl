@@ -82,7 +82,7 @@ source "azure-arm" "rstudio_image" {
 
   # Build VM configuration
   location        = "Central US"                          # Azure region
-  vm_size         = "Standard_B1s"                        # Lightweight VM (low cost)
+  vm_size         = "Standard_DS1_v2"                       
   os_type         = "Linux"
 
   os_disk_size_gb           = 64                           # Root disk size

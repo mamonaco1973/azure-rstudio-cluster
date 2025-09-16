@@ -55,7 +55,7 @@ resource "azurerm_windows_virtual_machine" "windows_ad_instance" {
   name                = "win-ad-${random_string.vm_suffix.result}" # VM name includes suffix
   location            = data.azurerm_resource_group.ad.location
   resource_group_name = data.azurerm_resource_group.ad.name
-  size                = "Standard_DS1_v2" # Small VM for demo/testing
+  size                = "Standard_DS1_v2" 
   admin_username      = "adminuser"
   admin_password      = random_password.win_adminuser_password.result
 
