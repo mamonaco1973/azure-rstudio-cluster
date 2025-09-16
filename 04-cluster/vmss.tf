@@ -108,7 +108,7 @@ resource "azurerm_monitor_autoscale_setting" "rstudio_vmss_autoscale" {
 # --------------------------------------------------------------------------------------------------
 # Grant VM's managed identity permission to read Key Vault secrets
 # --------------------------------------------------------------------------------------------------
-resource "azurerm_role_assignment" "vm_lnx_key_vault_secrets_user" {
+resource "azurerm_role_assignment" "vm_vmss_key_vault_secrets_user" {
   scope                = data.azurerm_key_vault.ad_key_vault.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_linux_virtual_machine_scale_set.rstudio_vmss.identity[0].principal_id
