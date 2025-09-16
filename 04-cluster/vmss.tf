@@ -23,9 +23,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
   resource_group_name = data.azurerm_resource_group.cluster_rg.name
 
   # VM configuration
-  sku             = "Standard_B1s"   # Instance size (baseline dev/test)
-  instances       = 2                # Initial instance count
-  admin_username  = "ubuntu"         # Default admin username
+  sku             = "Standard_DS1_v2"  # Instance size (baseline dev/test)
+  instances       = 2                  # Initial instance count
+  admin_username  = "ubuntu"           # Default admin username
   admin_password  = var.ubuntu_password
   disable_password_authentication = false
   source_image_id = data.azurerm_image.rstudio_image.id
