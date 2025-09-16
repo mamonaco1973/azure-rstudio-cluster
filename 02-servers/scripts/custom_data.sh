@@ -64,6 +64,8 @@ mount /nfs
 
 mkdir -p /nfs/home
 mkdir -p /nfs/data
+mkdir -p /nfs/rlibs
+
 echo "${storage_account}.file.core.windows.net:/${storage_account}/nfs/home /home aznfs vers=4.1,defaults 0 0" | \
   sudo tee -a /etc/fstab > /dev/null
 systemctl daemon-reload
