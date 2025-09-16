@@ -8,7 +8,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
   instances       = 2              # Number of instances
   admin_username  = "ubuntu"       # Admin username
   admin_password  = var.ubuntu_password
-  source_image_id = data.azurerm_image.rstudio_packer_image.id # Source image ID
+  source_image_id = data.azurerm_image.rstudio_image.id
   zones           = ["1", "2"]                                 # Availability zones
 
   os_disk {
