@@ -74,7 +74,7 @@ resource "azurerm_linux_virtual_machine" "rstudio_vm" {
     force_group     = "rstudio-users"
   }))
 
-   # Enable system-assigned managed identity
+  # Enable system-assigned managed identity
   identity {
     type = "SystemAssigned"
   }
