@@ -82,7 +82,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
     settings = jsonencode({
       protocol    = "http"
       port        = 8787
-      requestPath = "/"
+      requestPath = "/auth-sign-in"
     })
   }
 

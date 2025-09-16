@@ -75,7 +75,7 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
   # Backend HTTP settings
   backend_http_settings {
     name                  = "http-settings"
-    cookie_based_affinity = "Disabled" # No sticky sessions
+    cookie_based_affinity = "Enabled"  # Enable sticky sessions
     path                  = "/"
     port                  = 8787       # RStudio Server port
     protocol              = "Http"
@@ -87,11 +87,11 @@ resource "azurerm_application_gateway" "rstudio_app_gateway" {
   probe {
     name                = "custom-health-probe"
     protocol            = "Http"
-    path                = "/"      # Root path for health check
-    interval            = 5        # Check every 5 seconds
-    timeout             = 5        # 5-second response timeout
-    unhealthy_threshold = 1        # Mark unhealthy after one failure
-    host                = "127.0.0.1" # Dummy host (overridden by VMSS)
+    path                = "/auth-sign-in"      # Probe login page (returns 200 if RStudio is up)
+    interval            = 5                    # Check every 5 seconds
+    timeout             = 5                    # 5-second response timeout
+    unhealthy_threshold = 5                    # Mark unhealthy after five failures
+    port                = 8787                 # RStudio Server port
   }
 
   # HTTP listener configuration
