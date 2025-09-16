@@ -17,7 +17,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
   }
 
   network_interface {
-    name    = "-vmss-nic" # NIC name
+    name    = "rstudio-vmss-nic" # NIC name
     primary = true        # Primary NIC
 
     ip_configuration {
