@@ -42,6 +42,6 @@ locals {
     akumar_password = random_password.akumar_password.result # Random password for Amit Kumar
   })
 
-  depends_on = [azurerm_nat_gateway.nat_gateway,azurerm_subnet_nat_gateway_association.mini_ad_subnet_nat_assoc]
+  depends_on = [azurerm_nat_gateway.vm_nat_gateway,azurerm_subnet_nat_gateway_association.mini_ad_subnet_nat_assoc]
   
 }
