@@ -88,17 +88,17 @@ cd ..
 # ------------------------------------------------------------------------------
 cd 03-packer
 
-packer init .
-packer build \
-  -var="client_id=$ARM_CLIENT_ID" \
-  -var="client_secret=$ARM_CLIENT_SECRET" \
-  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
-  -var="tenant_id=$ARM_TENANT_ID" \
-  -var="resource_group=rstudio-vmss-rg" \
-  rstudio_image.pkr.hcl
+#packer init .
+#packer build \
+#  -var="client_id=$ARM_CLIENT_ID" \
+#  -var="client_secret=$ARM_CLIENT_SECRET" \
+#  -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
+#  -var="tenant_id=$ARM_TENANT_ID" \
+#  -var="resource_group=rstudio-vmss-rg" \
+#  rstudio_image.pkr.hcl
 
 cd ..
-exit 0
+#exit 0
 
 # ------------------------------------------------------------------------------
 # Phase 4: Deploy RStudio Cluster (VM Scale Set)
