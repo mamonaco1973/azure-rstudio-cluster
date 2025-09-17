@@ -29,8 +29,8 @@ resource "azurerm_key_vault_secret" "ubuntu_secret" {
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_network_interface" "nfs_gateway_nic" {
   name                = "nfs-gateway-nic"
-  location            = data.azurerm_resource_group.ad.location
-  resource_group_name = data.azurerm_resource_group.ad.name
+  location            = data.azurerm_resource_group.servers.location
+  resource_group_name = data.azurerm_resource_group.servers.name
 
   ip_configuration {
     name                          = "internal"                       # IP configuration label
@@ -44,8 +44,8 @@ resource "azurerm_network_interface" "nfs_gateway_nic" {
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_linux_virtual_machine" "nfs_gateway" {
   name                            = "nfs-gateway-${random_string.vm_suffix.result}" # VM name with suffix
-  location                        = data.azurerm_resource_group.ad.location
-  resource_group_name             = data.azurerm_resource_group.ad.name
+  location                        = data.azurerm_resource_group.servers.location
+  resource_group_name             = data.azurerm_resource_group.servers.name
   size                            = "Standard_B1s" # Small VM size (dev/test)
   admin_username                  = "ubuntu"       # Admin username
   admin_password                  = random_password.ubuntu_password.result

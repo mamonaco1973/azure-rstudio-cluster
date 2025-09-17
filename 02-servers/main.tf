@@ -30,10 +30,10 @@ data "azurerm_client_config" "current" {}
 # --------------------------------------------------------------------------------------------------
 # Input variable: Resource Group name
 # --------------------------------------------------------------------------------------------------
-variable "resource_group_name" {
-  description = "The name of the Azure Resource Group"
+variable "network_group_name" {
+  description = "The name of the Azure Resource Group for networking."
   type        = string
-  default     = "rstudio-project-rg"
+  default     = "rstudio-network-rg"
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -50,8 +50,13 @@ variable "vault_name" {
 # Fetch details about the specified Resource Group
 # --------------------------------------------------------------------------------------------------
 data "azurerm_resource_group" "ad" {
-  name = var.resource_group_name
+  name = var.network_group_name
 }
+
+data "azurerm_resource_group" "servers" {
+  name = "rstudio-servers-rg"
+}
+
 
 # --------------------------------------------------------------------------------------------------
 # Fetch details about existing Virtual Network
@@ -75,5 +80,5 @@ data "azurerm_subnet" "vm_subnet" {
 # --------------------------------------------------------------------------------------------------
 data "azurerm_key_vault" "ad_key_vault" {
   name                = var.vault_name
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.network_group_name
 }

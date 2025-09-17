@@ -38,7 +38,7 @@ data "azurerm_client_config" "current" {}
 variable "resource_group_name" {
   description = "The name of the Azure Resource Group"
   type        = string
-  default     = "rstudio-project-rg"
+  default     = "rstudio-network-rg"
 }
 
 # --------------------------------------------------------------------------------------------------
@@ -60,5 +60,10 @@ resource "azurerm_resource_group" "ad" {
 
 resource "azurerm_resource_group" "vmss" {
   name     = "rstudio-vmss-rg"
+  location = var.resource_group_location
+}
+
+resource "azurerm_resource_group" "servers" {
+  name     = "rstudio-servers-rg"
   location = var.resource_group_location
 }

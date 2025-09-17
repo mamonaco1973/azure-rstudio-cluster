@@ -82,12 +82,12 @@ variable "subnet_name" {
 
 # ------------------------------------------------------------------------------------------
 # Resource Group Name
-# - Existing Azure resource group for image storage and networking resources
+# - Existing Azure resource group for networking resources
 # ------------------------------------------------------------------------------------------
 variable "project_group_name" {
-  description = "Resource group used for the image and network resources"
+  description = "Resource group used for the network resources"
   type        = string
-  default     = "rstudio-project-rg"
+  default     = "rstudio-network-rg"
 }
 
 # ------------------------------------------------------------------------------------------

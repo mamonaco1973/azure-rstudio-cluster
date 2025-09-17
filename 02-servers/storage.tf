@@ -20,8 +20,8 @@ resource "random_string" "storage_name" {
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_storage_account" "scripts_storage" {
   name                     = "vmscripts${random_string.storage_name.result}" # Ensure global uniqueness
-  resource_group_name      = data.azurerm_resource_group.ad.name
-  location                 = data.azurerm_resource_group.ad.location
+  resource_group_name      = data.azurerm_resource_group.servers.name
+  location                 = data.azurerm_resource_group.servers.location
   account_tier             = "Standard" # Standard = cost-effective option
   account_replication_type = "LRS"      # Locally redundant storage (single region replication)
 }

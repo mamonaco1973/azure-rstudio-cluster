@@ -21,8 +21,8 @@ resource "azurerm_storage_account" "nfs_storage_account" {
   # - Replication set to Locally Redundant (LRS) for lab/demo use.
   # - Public access disabled to enforce traffic through the private endpoint.
   name                          = "nfs${random_string.vm_suffix.result}"
-  resource_group_name           = data.azurerm_resource_group.ad.name
-  location                      = data.azurerm_resource_group.ad.location
+  resource_group_name           = data.azurerm_resource_group.servers.name
+  location                      = data.azurerm_resource_group.servers.location
   account_kind                  = "FileStorage" # Enables Premium File shares
   account_tier                  = "Premium"     # Required for NFS support
   account_replication_type      = "LRS"         # Locally-redundant replication
@@ -58,7 +58,7 @@ resource "azurerm_storage_share" "nfs" {
 # ================================================================================================
 resource "azurerm_private_dns_zone" "file" {
   name                = "privatelink.file.core.windows.net"
-  resource_group_name = data.azurerm_resource_group.ad.name
+  resource_group_name = data.azurerm_resource_group.servers.name
 }
 
 # ----------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ resource "azurerm_private_dns_zone" "file" {
 # in the subnet resolve Azure Files names to private IPs.
 resource "azurerm_private_dns_zone_virtual_network_link" "file_link" {
   name                  = "vnet-link"
-  resource_group_name   = data.azurerm_resource_group.ad.name
+  resource_group_name   = data.azurerm_resource_group.servers.name
   private_dns_zone_name = azurerm_private_dns_zone.file.name
   virtual_network_id    = data.azurerm_virtual_network.ad_vnet.id
 }
@@ -85,8 +85,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "file_link" {
 # ================================================================================================
 resource "azurerm_private_endpoint" "pe_file" {
   name                = "pe-st-file"
-  location            = data.azurerm_resource_group.ad.location
-  resource_group_name = data.azurerm_resource_group.ad.name
+  location            = data.azurerm_resource_group.servers.location
+  resource_group_name = data.azurerm_resource_group.servers.name
   subnet_id           = data.azurerm_subnet.vm_subnet.id
 
   # --------------------------------------------------------------------------------------------

@@ -31,7 +31,7 @@ set -e  # Exit immediately if any command fails
 cd 04-cluster
 
 vault=$(az keyvault list \
-  --resource-group rstudio-project-rg \
+  --resource-group rstudio-network-rg \
   --query "[?starts_with(name, 'ad-key-vault')].name | [0]" \
   --output tsv)
 
@@ -58,7 +58,7 @@ secretsJson=$(az keyvault secret show \
 password=$(echo "$secretsJson" | jq -r '.password')
 
 storage_account=$(az storage account list \
-  --resource-group rstudio-project-rg \
+  --resource-group rstudio-servers-rg \
   --query "[?starts_with(name, 'nfs')].name | [0]" \
   -o tsv 2>/dev/null)
 

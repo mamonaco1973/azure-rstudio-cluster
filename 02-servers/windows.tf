@@ -38,8 +38,8 @@ resource "azurerm_key_vault_secret" "win_adminuser_secret" {
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_network_interface" "windows_vm_nic" {
   name                = "windows-vm-nic"
-  location            = data.azurerm_resource_group.ad.location
-  resource_group_name = data.azurerm_resource_group.ad.name
+  location            = data.azurerm_resource_group.servers.location
+  resource_group_name = data.azurerm_resource_group.servers.name
 
   ip_configuration {
     name                          = "internal"                       # Label for NIC config
@@ -53,8 +53,8 @@ resource "azurerm_network_interface" "windows_vm_nic" {
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_windows_virtual_machine" "windows_ad_instance" {
   name                = "win-ad-${random_string.vm_suffix.result}" # VM name includes suffix
-  location            = data.azurerm_resource_group.ad.location
-  resource_group_name = data.azurerm_resource_group.ad.name
+  location            = data.azurerm_resource_group.servers.location
+  resource_group_name = data.azurerm_resource_group.servers.name
   size                = "Standard_DS1_v2" 
   admin_username      = "adminuser"
   admin_password      = random_password.win_adminuser_password.result
