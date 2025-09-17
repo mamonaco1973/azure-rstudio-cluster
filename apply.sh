@@ -141,3 +141,7 @@ terraform apply -var="vault_name=$vault" \
 
 cd ..
 echo "NOTE: Azure RStudio Cluster deployment completed successfully."
+
+# Validate that the cluster is ready.
+
+./validate.sh
