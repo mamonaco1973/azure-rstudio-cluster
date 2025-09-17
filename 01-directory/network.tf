@@ -228,3 +228,47 @@ resource "azurerm_subnet_network_security_group_association" "app_gateway_nsg_as
   subnet_id                 = azurerm_subnet.app_gateway_subnet.id
   network_security_group_id = azurerm_network_security_group.rstudio_gateway_nsg.id
 }
+
+# ------------------------------------------------------------------------------
+# Route Table: Default Internet Routing
+# - Creates a route table to explicitly send all outbound traffic
+#   (0.0.0.0/0) to the Internet.
+# - Required when `default_outbound_access_enabled = false` is set
+#   on a subnet.
+# - Works in conjunction with a NAT Gateway to provide outbound
+#   SNAT for private subnets.
+# ------------------------------------------------------------------------------
+resource "azurerm_route_table" "default_internet" {
+  name                = "default-internet-rt"
+  location            = azurerm_resource_group.ad.location
+  resource_group_name = azurerm_resource_group.ad.name
+
+  route {
+    name           = "internet"
+    address_prefix = "0.0.0.0/0"
+    next_hop_type  = "Internet"
+  }
+}
+# ------------------------------------------------------------------------------
+# Route Table Association: VM Subnet
+# - Associates the default internet route table with the VM subnet.
+# - Ensures VM instances in this subnet use the NAT Gateway for all
+#   outbound internet connectivity.
+# ------------------------------------------------------------------------------
+resource "azurerm_subnet_route_table_association" "vm_subnet_assoc" {
+  subnet_id      = azurerm_subnet.vm_subnet.id
+  route_table_id = azurerm_route_table.default_internet.id
+}
+
+# ------------------------------------------------------------------------------
+# Route Table Association: AD Subnet
+# - Associates the default internet route table with the Active
+#   Directory subnet.
+# - Ensures domain controller and related services have outbound
+#   connectivity for patching, updates, and extension downloads.
+# ------------------------------------------------------------------------------
+resource "azurerm_subnet_route_table_association" "ad_subnet_assoc" {
+  subnet_id      = azurerm_subnet.ad_subnet.id
+  route_table_id = azurerm_route_table.default_internet.id
+}
+
