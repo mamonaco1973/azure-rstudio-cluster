@@ -63,9 +63,9 @@ resource "azurerm_storage_blob" "ad_join_script" {
   storage_container_name = azurerm_storage_container.scripts.name
   type                   = "Block" # Block blob (best for discrete files)
   source                 = local_file.ad_join_rendered.filename
-  metadata = {
-    force_update = "${timestamp()}" # Forces re-upload whenever timestamp changes
-  }
+  #metadata = {
+  #  force_update = "${timestamp()}" # Forces re-upload whenever timestamp changes
+  #}
 }
 
 # --------------------------------------------------------------------------------------------------
