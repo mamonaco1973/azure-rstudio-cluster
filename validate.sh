@@ -31,12 +31,12 @@ check_backend_health() {
 # -------------------------------------
 # Main loop: wait until backends are healthy
 # -------------------------------------
-echo "NOTE: Waiting for at least one healthy backend server..."
+echo "NOTE: Waiting for at least one healthy backend RStudio server..."
 for ((i = 1; i <= MAX_RETRIES; i++)); do
     HEALTHY_SERVERS=$(check_backend_health)
 
     if [[ -n "$HEALTHY_SERVERS" ]]; then
-        echo "NOTE: At least one healthy backend server found!"
+        echo "NOTE: At least one healthy backend RStudio server found!"
 
         # Fetch DNS name of App Gateway public IP
         export DNS_NAME=$(az network public-ip show \
