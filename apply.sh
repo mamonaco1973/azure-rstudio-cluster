@@ -80,7 +80,6 @@ echo "NOTE: Key Vault for secrets is $vault"
 terraform init
 terraform apply -var="vault_name=$vault" -auto-approve
 cd ..
-exit 0
 
 # ------------------------------------------------------------------------------
 # Phase 3: Build RStudio Image with Packer
@@ -99,6 +98,7 @@ packer build \
   rstudio_image.pkr.hcl
 
 cd ..
+exit 0
 
 # ------------------------------------------------------------------------------
 # Phase 4: Deploy RStudio Cluster (VM Scale Set)
