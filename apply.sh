@@ -59,7 +59,6 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 cd ..
-exit 0
 
 # ------------------------------------------------------------------------------
 # Phase 2: Deploy Services Layer
@@ -81,6 +80,7 @@ echo "NOTE: Key Vault for secrets is $vault"
 terraform init
 terraform apply -var="vault_name=$vault" -auto-approve
 cd ..
+exit 0
 
 # ------------------------------------------------------------------------------
 # Phase 3: Build RStudio Image with Packer
