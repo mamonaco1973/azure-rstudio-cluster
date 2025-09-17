@@ -3,7 +3,7 @@
 #
 # PURPOSE:
 #   - Provides a public entry point for RStudio VM Scale Set instances.
-#   - Terminates HTTP traffic on port 80 and forwards to backend pool (port 8787).
+#   - Routes HTTP traffic on port 80 and forwards to backend pool (port 8787).
 #   - Includes a custom health probe for continuous monitoring.
 #   - Uses a randomized DNS suffix to ensure unique public FQDN.
 #
