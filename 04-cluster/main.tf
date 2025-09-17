@@ -28,11 +28,15 @@ data "azurerm_client_config" "current" {}
 
 
 # ------------------------------------------------------------------------------------------
-# Resource Group Lookup
+# Resource Group Lookups
 # - Existing resource group used for image, network, and secrets
 # ------------------------------------------------------------------------------------------
 data "azurerm_resource_group" "cluster_rg" {
-  name = var.resource_group_name
+  name = var.cluster_group_name
+}
+
+data "azurerm_resource_group" "project_rg" {
+  name = var.project_group_name
 }
 
 # ------------------------------------------------------------------------------------------
@@ -51,7 +55,7 @@ data "azurerm_image" "rstudio_image" {
 # ------------------------------------------------------------------------------------------
 data "azurerm_virtual_network" "cluster_vnet" {
   name                = var.vnet_name
-  resource_group_name = data.azurerm_resource_group.cluster_rg.name
+  resource_group_name = data.azurerm_resource_group.project_rg.name
 }
 
 
@@ -62,7 +66,7 @@ data "azurerm_virtual_network" "cluster_vnet" {
 data "azurerm_subnet" "cluster_subnet" {
   name                 = var.subnet_name
   virtual_network_name = data.azurerm_virtual_network.cluster_vnet.name
-  resource_group_name  = data.azurerm_resource_group.cluster_rg.name
+  resource_group_name  = data.azurerm_resource_group.project_rg.name
 }
 
 # ------------------------------------------------------------------------------------------
@@ -72,7 +76,7 @@ data "azurerm_subnet" "cluster_subnet" {
 data "azurerm_subnet" "app_gateway_subnet" {
   name                 = "app-gateway-subnet"
   virtual_network_name = data.azurerm_virtual_network.cluster_vnet.name
-  resource_group_name  = data.azurerm_resource_group.cluster_rg.name
+  resource_group_name  = data.azurerm_resource_group.project_rg.name
 }
 
 # ------------------------------------------------------------------------------------------
@@ -81,5 +85,5 @@ data "azurerm_subnet" "app_gateway_subnet" {
 # ------------------------------------------------------------------------------------------
 data "azurerm_key_vault" "ad_key_vault" {
   name                = var.vault_name
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.project_rg.name
 }

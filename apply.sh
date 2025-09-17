@@ -94,7 +94,7 @@ packer build \
   -var="client_secret=$ARM_CLIENT_SECRET" \
   -var="subscription_id=$ARM_SUBSCRIPTION_ID" \
   -var="tenant_id=$ARM_TENANT_ID" \
-  -var="resource_group=rstudio-project-rg" \
+  -var="resource_group=rstudio-vmss-rg" \
   rstudio_image.pkr.hcl
 
 cd ..
@@ -107,14 +107,14 @@ cd ..
 # - Deploys RStudio cluster via VMSS (joined to AD, backed by NFS)
 # ------------------------------------------------------------------------------
 rstudio_image_name=$(az image list \
-  --resource-group rstudio-project-rg \
+  --resource-group rstudio-vmss-rg \
   --query "[?starts_with(name, 'rstudio_image')]|sort_by(@, &name)[-1].name" \
   --output tsv)
 
-echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-project-rg."
+echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-vmss-rg."
 
 if [ -z "$rstudio_image_name" ]; then
-  echo "ERROR: No image with prefix 'rstudio_image' in rstudio-project-rg."
+  echo "ERROR: No image with prefix 'rstudio_image' in rstudio-vmss-rg."
   exit 1
 fi
 

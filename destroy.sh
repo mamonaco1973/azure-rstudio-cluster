@@ -38,11 +38,11 @@ vault=$(az keyvault list \
 echo "NOTE: Using Key Vault: $vault"
 
 rstudio_image_name=$(az image list \
-  --resource-group rstudio-project-rg \
+  --resource-group rstudio-vmss-rg \
   --query "[?starts_with(name, 'rstudio_image')]|sort_by(@, &name)[-1].name" \
   --output tsv)
 
-echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-project-rg."
+echo "NOTE: Using the latest image ($rstudio_image_name) in rstudio-vmss-rg."
 
 if [ -z "$rstudio_image_name" ]; then
   echo "ERROR: No RStudio image with prefix 'rstudio_image' found. Exiting."
@@ -72,13 +72,13 @@ terraform destroy -var="vault_name=$vault" \
 cd ..
 
 az image list \
-  --resource-group "rstudio-project-rg" \
+  --resource-group "rstudio-vmss-rg" \
   --query "[].name" \
   -o tsv | while read -r IMAGE; do
     echo "NOTE: Deleting image: $IMAGE"
     az image delete \
       --name "$IMAGE" \
-      --resource-group "rstudio-project-rg" \
+      --resource-group "rstudio-vmss-rg" \
       || echo "WARNING: Failed to delete $IMAGE — skipping"
 done
 
