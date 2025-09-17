@@ -268,7 +268,7 @@ resource "azurerm_subnet_route_table_association" "vm_subnet_assoc" {
 #   connectivity for patching, updates, and extension downloads.
 # ------------------------------------------------------------------------------
 resource "azurerm_subnet_route_table_association" "ad_subnet_assoc" {
-  subnet_id      = azurerm_subnet.ad_subnet.id
+  subnet_id      = azurerm_subnet.mini_ad_subnet.id
   route_table_id = azurerm_route_table.default_internet.id
 }
 
