@@ -122,5 +122,6 @@ resource "azurerm_virtual_machine_extension" "join_script" {
 # --------------------------------------------------------------------------------------------------
 output "ad_join_script_url" {
   value       = "https://${azurerm_storage_account.scripts_storage.name}.blob.core.windows.net/${azurerm_storage_container.scripts.name}/${azurerm_storage_blob.ad_join_script.name}?${data.azurerm_storage_account_sas.script_sas.sas}"
-  description = "URL to the AD join script with SAS token."
+  description = "URL to the AD join script with SAS token." 
+  sensitive = true
 }
