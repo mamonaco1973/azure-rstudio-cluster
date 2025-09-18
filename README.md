@@ -56,6 +56,12 @@ Terraform has been successfully initialized!
 
 When the deployment completes, the following resources are created:  
 
+- **Resource Groups:**  
+  - **rstudio-mini-ad-rg** - Mini-AD components
+  - **rstudio-network-rg** – Networking, Bastion, and Key Vault  
+  - **rstudio-servers-rg** – Domain-joined Linux/Windows servers and storage integration  
+  - **rstudio-vmss-rg** – RStudio VM Scale Set (VMSS), Application Gateway, and related cluster infra  
+
 - **Networking:**  
   - A VNet with dedicated subnets for Active Directory, VMSS cluster nodes, Bastion, and Application Gateway  
   - Azure Bastion for secure RDP/SSH access without public IPs  
@@ -78,7 +84,7 @@ When the deployment completes, the following resources are created:
 
 - **Azure Files Storage:**  
   - Premium Storage Account with SMB and NFS protocol enabled  
-  - File shares provisioned for shared R libraries (`/mnt/azfiles/rlibs`) and user home directories  
+  - File shares provisioned for shared R libraries (`/nfs/rlibs`) and user home directories  
 
 - **File Access Integration:**  
   - RStudio VMSS instances mount the Azure Files NFS share for shared R libraries and project data  
