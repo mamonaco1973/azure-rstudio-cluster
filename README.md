@@ -133,7 +133,7 @@ Follow these steps to provision a new user in the Active Directory domain and va
    - Open **PowerShell** on the AD server.  
    - Run the script located at:  
      ```powershell
-     Z:\efs\aws-rstudio-cluster\06-utils\getNextUID.bat
+     Z:\nfs\azure-rstudio-cluster\06-utils\getNextUID.bat
      ```  
    - This script returns the next available **`uidNumber`** to assign to the new account.  
 
