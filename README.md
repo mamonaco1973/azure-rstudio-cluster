@@ -54,32 +54,36 @@ Terraform has been successfully initialized!
 When the deployment completes, the following resources are created:  
 
 - **Networking:**  
-  - A VNet with public and private subnets  
-  - Azure Bastion for secure RDP/SSH without public IPs  
-  - Route tables configured for AD, clients, and storage access  
+  - A VNet with dedicated subnets for Active Directory, VMSS cluster nodes, Bastion, and Application Gateway  
+  - Azure Bastion for secure RDP/SSH access without public IPs  
+  - Route tables configured for outbound internet access, AD lookups, and storage access  
 
 - **Security & Identity:**  
-  - NSGs for domain controller, Linux client, Windows client, and storage access  
+  - NSGs for domain controller, VMSS nodes, bastion, and storage endpoints  
   - Azure Key Vault for credential storage (admin + user accounts)  
-  - Managed Identities for VM-to-Key Vault secret retrieval  
+  - Managed Identities for VMSS instances to retrieve secrets from Key Vault  
 
 - **Active Directory Server:**  
   - Ubuntu VM running Samba 4 as Domain Controller and DNS server  
-  - Configured Kerberos realm and NetBIOS name  
-  - Administrator credentials stored in Key Vault  
+  - Configured Kerberos realm and NetBIOS name for authentication  
+  - Administrator credentials securely stored in Key Vault  
 
-- **Client Instances:**  
-  - Windows VM joined to the domain via boot-time PowerShell script  
-  - Linux VM joined to the domain with SSSD integration via cloud-init  
+- **RStudio Cluster (VMSS):**  
+  - Linux VM Scale Set (VMSS) hosting RStudio Server nodes built from a Packer-generated custom image  
+  - Azure Application Gateway providing public access, load balancing, health probes, and cookie-based affinity  
+  - Autoscaling policies to add/remove RStudio nodes based on CPU utilization  
 
 - **Azure Files Storage:**  
-  - Premium Storage Account with SMB and/or NFS protocol enabled  
-  - File shares provisioned for shared data and home directories  
+  - Premium Storage Account with SMB and NFS protocol enabled  
+  - File shares provisioned for shared R libraries (`/mnt/azfiles/rlibs`) and user home directories  
 
 - **File Access Integration:**  
-  - A Linux VM mounts the Azure Files NFS share  
-  - The same Linux VM exposes the mounted share via **Samba**, acting as a gateway for Windows clients  
-  - This enables domain-joined Windows machines to access Azure Files storage transparently using SMB, while Linux clients mount NFS directly  
+  - RStudio VMSS instances mount the Azure Files NFS share for shared R libraries and project data  
+  - Domain-joined Windows clients (optional) can connect directly via SMB to the same Azure Files shares  
+  - This provides a unified storage backend across Linux (NFS) and Windows (SMB) clients  
+
+- **Sample R Workloads:**  
+  - Example R scripts (Monte Carlo, bell curve, surface plotting, etc.) included to validate the environment  
 
 ### Users and Groups  
 
@@ -99,10 +103,10 @@ The domain controller provisions **sample users and groups** via Terraform templ
 
 | Username | Full Name   | uidNumber | gidNumber | Groups Joined                    |
 |----------|-------------|-----------|-----------|----------------------------------|
-| jsmith   | John Smith  | 10001     | 10001     | mcloud-users, us, linux-admins, rstudio-admins  |
-| edavis   | Emily Davis | 10002     | 10001     | mcloud-users, us                 |
-| rpatel   | Raj Patel   | 10003     | 10001     | mcloud-users, india, linux-admins, rstudio-admins|
-| akumar   | Amit Kumar  | 10004     | 10001     | mcloud-users, india              |
+| jsmith   | John Smith  | 10001     | 10001     | rstudio-users, us, linux-admins, rstudio-admins  |
+| edavis   | Emily Davis | 10002     | 10001     | rstudio-users, us                 |
+| rpatel   | Raj Patel   | 10003     | 10001     | rstudio-users, india, linux-admins, rstudio-admins|
+| akumar   | Amit Kumar  | 10004     | 10001     | rstudio-users, india              |
 
 ### Creating a New RStudio User
 
