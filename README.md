@@ -24,7 +24,10 @@ Together, this architecture provides a reproducible, cloud-native RStudio enviro
 
 If this is your first time watching our content, we recommend starting with this video: [Azure + Terraform: Easy Setup](https://www.youtube.com/watch?v=wwi3kVgYNOk). It provides a step-by-step guide to properly configure Terraform, Packer, and the AZ CLI.
 
----
+## Build WorkFlow
+
+![Build WorkFlow](build-workflow.png)
+
 
 ## Download this Repository  
 
