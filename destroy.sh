@@ -91,6 +91,10 @@ cd 02-servers
 
 terraform init
 terraform destroy -var="vault_name=$vault" \
+                  -target=azurerm_private_dns_zone_virtual_network_link.file_link \
+                  -auto-approve
+sleep 60 # Wait for DNS link deletion to propagate
+terraform destroy -var="vault_name=$vault" \
                   -auto-approve
 
 cd ..
