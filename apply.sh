@@ -60,8 +60,6 @@ if [ $? -ne 0 ]; then
 fi
 cd ..
 
-exit 0
-
 # ------------------------------------------------------------------------------
 # Phase 2: Deploy Services Layer
 # - Provisions supporting services:
