@@ -248,10 +248,4 @@ resource "azurerm_subnet_network_security_group_association" "app_gateway_nsg_as
   ]
 }
 
-resource "azurerm_subnet_network_security_group_association" "bastion_nsg_assoc" {
-  subnet_id                 = azurerm_subnet.bastion_subnet.id
-  network_security_group_id = azurerm_network_security_group.rstudio_gateway_nsg.id
-
-  depends_on = [ azurerm_subnet_network_security_group_association.app_gateway_nsg_assoc ]
-}
 
