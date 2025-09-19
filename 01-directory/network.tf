@@ -6,64 +6,18 @@
 # ==================================================================================================
 
 # --------------------------------------------------------------------------------------------------
-# Define the Virtual Network
+# Virtual Network
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_virtual_network" "ad_vnet" {
   name                = "ad-vnet"
-  address_space       = ["10.0.0.0/23"]                     # Overall VNet range
+  address_space       = ["10.0.0.0/23"] # Overall VNet range
   location            = azurerm_resource_group.ad.location
   resource_group_name = azurerm_resource_group.ad.name
 }
 
 # --------------------------------------------------------------------------------------------------
-# Define VM Subnet (10.0.0.0/25)
+# NAT Gateway + Public IP
 # --------------------------------------------------------------------------------------------------
-resource "azurerm_subnet" "vm_subnet" {
-  name                 = "vm-subnet"
-  resource_group_name  = azurerm_resource_group.ad.name
-  virtual_network_name = azurerm_virtual_network.ad_vnet.name
-  address_prefixes     = ["10.0.0.0/25"]
-  default_outbound_access_enabled = false
-}
-
-# --------------------------------------------------------------------------------------------------
-# Define Mini-AD Subnet (10.0.0.128/25)
-# --------------------------------------------------------------------------------------------------
-resource "azurerm_subnet" "mini_ad_subnet" {
-  name                 = "mini-ad-subnet"
-  resource_group_name  = azurerm_resource_group.ad.name
-  virtual_network_name = azurerm_virtual_network.ad_vnet.name
-  address_prefixes     = ["10.0.0.128/25"]
-  default_outbound_access_enabled = false
-}
-
-# --------------------------------------------------------------------------------------------------
-# Define Bastion Subnet (10.0.1.0/25)
-# NOTE: Bastion requires subnet name to be exactly "AzureBastionSubnet"
-# --------------------------------------------------------------------------------------------------
-resource "azurerm_subnet" "bastion_subnet" {
-  name                 = "AzureBastionSubnet"
-  resource_group_name  = azurerm_resource_group.ad.name
-  virtual_network_name = azurerm_virtual_network.ad_vnet.name
-  address_prefixes     = ["10.0.1.0/25"]
-}
-
-# --------------------------------------------------------------------------------------------------
-# Define App Gateway Subnet (10.0.1.128/25)
-# NOTE: Application Gateway requires its own dedicated subnet
-# --------------------------------------------------------------------------------------------------
-resource "azurerm_subnet" "app_gateway_subnet" {
-  name                 = "app-gateway-subnet"
-  resource_group_name  = azurerm_resource_group.ad.name
-  virtual_network_name = azurerm_virtual_network.ad_vnet.name
-  address_prefixes     = ["10.0.1.128/25"]
-}
-
-# --------------------------------------------------------------------------------------------------
-# NAT Gateway: Public IP, Gateway, and Associations
-# --------------------------------------------------------------------------------------------------
-
-# Public IP for NAT Gateway
 resource "azurerm_public_ip" "nat_gateway_pip" {
   name                = "nat-gateway-pip"
   location            = azurerm_resource_group.ad.location
@@ -72,42 +26,28 @@ resource "azurerm_public_ip" "nat_gateway_pip" {
   sku                 = "Standard"
 }
 
-# NAT Gateway Resource
 resource "azurerm_nat_gateway" "vm_nat_gateway" {
-  name                = "vm-nat-gateway"
-  location            = azurerm_resource_group.ad.location
-  resource_group_name = azurerm_resource_group.ad.name
-  sku_name            = "Standard"
+  name                    = "vm-nat-gateway"
+  location                = azurerm_resource_group.ad.location
+  resource_group_name     = azurerm_resource_group.ad.name
+  sku_name                = "Standard"
   idle_timeout_in_minutes = 10
 }
 
-# Associate Public IP with NAT Gateway
 resource "azurerm_nat_gateway_public_ip_association" "nat_gw_pip_assoc" {
   nat_gateway_id       = azurerm_nat_gateway.vm_nat_gateway.id
   public_ip_address_id = azurerm_public_ip.nat_gateway_pip.id
 }
 
-# Associate NAT Gateway with VM Subnet
-resource "azurerm_subnet_nat_gateway_association" "vm_nat_assoc" {
-  subnet_id      = azurerm_subnet.vm_subnet.id
-  nat_gateway_id = azurerm_nat_gateway.vm_nat_gateway.id
-}
-
-# Associate NAT Gateway with Mini-AD Subnet
-resource "azurerm_subnet_nat_gateway_association" "mini_ad_nat_assoc" {
-  subnet_id      = azurerm_subnet.mini_ad_subnet.id
-  nat_gateway_id = azurerm_nat_gateway.vm_nat_gateway.id
-}
-
 # --------------------------------------------------------------------------------------------------
-# Network Security Group (NSG) for VM subnet
+# Network Security Group for VM Subnet
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_network_security_group" "vm_nsg" {
   name                = "vm-nsg"
   location            = azurerm_resource_group.ad.location
   resource_group_name = azurerm_resource_group.ad.name
 
-  # Inbound Rules ----------------------------------------------------------------
+  # Inbound Rules
   security_rule {
     name                       = "Allow-SSH"
     priority                   = 1001
@@ -156,7 +96,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     destination_address_prefix = "*"
   }
 
-  # Outbound Rules ----------------------------------------------------------------
+  # Outbound Rules
   security_rule {
     name                       = "Allow-All-Internet-Outbound"
     priority                   = 2001
@@ -170,21 +110,95 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 }
 
-# Associate NSG with VM subnet
-resource "azurerm_subnet_network_security_group_association" "vm_nsg_assoc" {
-  subnet_id                 = azurerm_subnet.vm_subnet.id
-  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+# --------------------------------------------------------------------------------------------------
+# Subnets (created sequentially to avoid 409 conflicts)
+# --------------------------------------------------------------------------------------------------
+
+# VM Subnet
+resource "azurerm_subnet" "vm_subnet" {
+  name                          = "vm-subnet"
+  resource_group_name           = azurerm_resource_group.ad.name
+  virtual_network_name          = azurerm_virtual_network.ad_vnet.name
+  address_prefixes              = ["10.0.0.0/25"]
+  default_outbound_access_enabled = false
+
+  depends_on = [azurerm_virtual_network.ad_vnet]
+}
+
+# Mini-AD Subnet
+resource "azurerm_subnet" "mini_ad_subnet" {
+  name                          = "mini-ad-subnet"
+  resource_group_name           = azurerm_resource_group.ad.name
+  virtual_network_name          = azurerm_virtual_network.ad_vnet.name
+  address_prefixes              = ["10.0.0.128/25"]
+  default_outbound_access_enabled = false
+
+  depends_on = [azurerm_subnet.vm_subnet]
+}
+
+# Bastion Subnet
+resource "azurerm_subnet" "bastion_subnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.ad.name
+  virtual_network_name = azurerm_virtual_network.ad_vnet.name
+  address_prefixes     = ["10.0.1.0/25"]
+
+  depends_on = [azurerm_subnet.mini_ad_subnet]
+}
+
+# App Gateway Subnet
+resource "azurerm_subnet" "app_gateway_subnet" {
+  name                 = "app-gateway-subnet"
+  resource_group_name  = azurerm_resource_group.ad.name
+  virtual_network_name = azurerm_virtual_network.ad_vnet.name
+  address_prefixes     = ["10.0.1.128/25"]
+
+  depends_on = [azurerm_subnet.bastion_subnet]
 }
 
 # --------------------------------------------------------------------------------------------------
-# Network Security Group (NSG) for Application Gateway Subnet
+# Associations (serialized per subnet)
+# --------------------------------------------------------------------------------------------------
+
+# NAT GW association -> VM subnet
+resource "azurerm_subnet_nat_gateway_association" "vm_nat_assoc" {
+  subnet_id      = azurerm_subnet.vm_subnet.id
+  nat_gateway_id = azurerm_nat_gateway.vm_nat_gateway.id
+
+  depends_on = [
+    azurerm_subnet.vm_subnet,
+    azurerm_nat_gateway_public_ip_association.nat_gw_pip_assoc
+  ]
+}
+
+# NSG association -> VM subnet (after NAT GW is applied)
+resource "azurerm_subnet_network_security_group_association" "vm_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.vm_subnet.id
+  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+
+  depends_on = [azurerm_subnet_nat_gateway_association.vm_nat_assoc]
+}
+
+# NAT GW association -> Mini-AD subnet
+resource "azurerm_subnet_nat_gateway_association" "mini_ad_nat_assoc" {
+  subnet_id      = azurerm_subnet.mini_ad_subnet.id
+  nat_gateway_id = azurerm_nat_gateway.vm_nat_gateway.id
+
+  depends_on = [
+    azurerm_subnet.mini_ad_subnet,
+    azurerm_nat_gateway_public_ip_association.nat_gw_pip_assoc
+  ]
+}
+
+# --------------------------------------------------------------------------------------------------
+# Network Security Group for Application Gateway Subnet
 # --------------------------------------------------------------------------------------------------
 resource "azurerm_network_security_group" "rstudio_gateway_nsg" {
   name                = "rstudio-gateway-nsg"
   location            = azurerm_resource_group.ad.location
   resource_group_name = azurerm_resource_group.ad.name
 
-  # Inbound Rules ----------------------------------------------------------------
+  # Inbound Rules
   security_rule {
     name                       = "Allow-HTTP"
     priority                   = 1002
@@ -209,7 +223,7 @@ resource "azurerm_network_security_group" "rstudio_gateway_nsg" {
     destination_address_prefix = "*"
   }
 
-  # Outbound Rules ----------------------------------------------------------------
+  # Outbound Rules
   security_rule {
     name                       = "Allow-All-Internet-Outbound"
     priority                   = 2001
@@ -223,11 +237,13 @@ resource "azurerm_network_security_group" "rstudio_gateway_nsg" {
   }
 }
 
-# Associate NSG with App Gateway subnet
+# NSG association -> App Gateway subnet (after Bastion host & subnet)
 resource "azurerm_subnet_network_security_group_association" "app_gateway_nsg_assoc" {
   subnet_id                 = azurerm_subnet.app_gateway_subnet.id
   network_security_group_id = azurerm_network_security_group.rstudio_gateway_nsg.id
-  depends_on = [ azurerm_bastion_host.bastion_host ]
+
+  depends_on = [
+    azurerm_subnet.app_gateway_subnet,
+    azurerm_bastion_host.bastion_host
+  ]
 }
-
-
