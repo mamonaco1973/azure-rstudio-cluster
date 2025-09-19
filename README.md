@@ -174,7 +174,7 @@ Follow these steps to provision a new user in the Active Directory domain and va
 ![Linux](linux.png)
 
 9. **Validate RStudio Access**  
-   - Open the RStudio cluster’s Application Gateway's URL in a browser (e.g., `https://rstudio-alb-xxxxxx.us-east-1.elb.amazonaws.com`).  
+   - Open the RStudio cluster’s Application Gateway's URL in a browser (e.g., `http://rstudio-cluster-xxxxx.centralus.cloudapp.azure.com/`).  
    - Log in with the new AD credentials.  
 
 10. **Verify Permissions**  
