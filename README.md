@@ -106,7 +106,7 @@ The domain controller provisions **sample users and groups** via Terraform templ
 | india         | Security  | Universal | 10002 |
 | us            | Security  | Universal | 10003 |
 | linux-admins  | Security  | Universal | 10004 |
-| rstudio-admins  | Security  | Universal | 10004 |
+| rstudio-admins  | Security  | Universal | 10005 |
 
 #### Users Created  
 
