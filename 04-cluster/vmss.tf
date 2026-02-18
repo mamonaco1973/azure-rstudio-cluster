@@ -1,58 +1,71 @@
-# ================================================================================================
-# Linux Virtual Machine Scale Set (VMSS) for RStudio Cluster
+# ==============================================================================
+# File: vmss.tf
+# ==============================================================================
+# Purpose:
+#   - Deploy Linux VM Scale Set (VMSS) for RStudio Server cluster.
+#   - Register instances in Application Gateway backend pool.
+#   - Bootstrap instances via cloud-init for AD join and NFS integration.
+#   - Enable health monitoring and automatic instance repair.
+#   - Configure CPU-based autoscale profile.
+#   - Grant VMSS identity permission to read Key Vault secrets.
 #
-# PURPOSE:
-#   - Deploys an Azure VM Scale Set (VMSS) to host RStudio Server instances.
-#   - Integrates with Application Gateway for load balancing.
-#   - Bootstraps each VM with a cloud-init script for RStudio install, AD domain
-#     join, and NFS-backed Samba integration.
-#   - Enables automatic instance repair and health monitoring.
-#
-# COMPONENTS:
-#   1. VMSS definition (size, image, networking, bootstrap).
-#   2. Autoscale settings for CPU-based elasticity.
-#   3. Managed identity with Key Vault secret access.
-# ================================================================================================
+# Notes:
+#   - Password authentication is enabled for lab/dev convenience.
+#   - Health extension checks RStudio login endpoint on port 8787.
+# ==============================================================================
 
-# --------------------------------------------------------------------------------
-# VM SCALE SET: Defines Linux VMSS for RStudio with load balancer integration
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Linux VM Scale Set
+# ------------------------------------------------------------------------------
+# Deploys VMSS instances from custom Managed Image.
+# Attaches instances to Application Gateway backend pool.
+# Bootstraps instances using cloud-init template.
+# ------------------------------------------------------------------------------
 resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
-  name                = "rstudio-vmss"  # Logical name of the VM scale set
+  name                = "rstudio-vmss"
   location            = data.azurerm_resource_group.cluster_rg.location
   resource_group_name = data.azurerm_resource_group.cluster_rg.name
 
-  # VM configuration
-  sku             = "Standard_DS1_v2"   # Instance size (baseline dev/test)
-  instances       = 2                  # Initial instance count
-  admin_username  = "ubuntu"           # Default admin username
-  admin_password  = var.ubuntu_password
+  sku                            = "Standard_DS1_v2"
+  instances                      = 2
+  admin_username                 = "ubuntu"
+  admin_password                 = var.ubuntu_password
   disable_password_authentication = false
-  source_image_id = data.azurerm_image.rstudio_image.id
+  source_image_id                = data.azurerm_image.rstudio_image.id
 
-  # OS Disk settings
   os_disk {
-    caching              = "ReadWrite"    # Enable disk caching
-    storage_account_type = "Standard_LRS" # Locally redundant storage
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
-  # Network interface configuration
+  # --------------------------------------------------------------------------
+  # Networking
+  # --------------------------------------------------------------------------
+  # Primary NIC attaches to cluster subnet.
+  # IP config registers into App Gateway backend pool.
+  # --------------------------------------------------------------------------
   network_interface {
-    name    = "rstudio-vmss-nic" # NIC logical name
-    primary = true                # Mark NIC as primary
+    name    = "rstudio-vmss-nic"
+    primary = true
 
     ip_configuration {
-      name      = "internal" # IP config name
+      name      = "internal"
       subnet_id = data.azurerm_subnet.cluster_subnet.id
 
-      # Attach instances to Application Gateway backend pool
       application_gateway_backend_address_pool_ids = [
         tolist(azurerm_application_gateway.rstudio_app_gateway.backend_address_pool)[0].id
       ]
     }
   }
 
-  # Bootstrap script (cloud-init)
+  # --------------------------------------------------------------------------
+  # Bootstrap (cloud-init)
+  # --------------------------------------------------------------------------
+  # Template injects domain and storage settings for:
+  #   - AD domain join
+  #   - RStudio configuration
+  #   - NFS-backed Samba integration
+  # --------------------------------------------------------------------------
   custom_data = base64encode(templatefile("${path.module}/scripts/rstudio_booter.sh", {
     vault_name      = data.azurerm_key_vault.ad_key_vault.name
     domain_fqdn     = var.dns_zone
@@ -62,17 +75,25 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
     force_group     = "rstudio-users"
   }))
 
-  # VMSS runtime settings
   computer_name_prefix = "rstudio"
   upgrade_mode         = "Automatic"
 
-  # Enable automatic repair of unhealthy instances
+  # --------------------------------------------------------------------------
+  # Automatic Instance Repair
+  # --------------------------------------------------------------------------
+  # Repairs unhealthy instances after grace period.
+  # --------------------------------------------------------------------------
   automatic_instance_repair {
     enabled      = true
     grace_period = "PT10M"
   }
 
+  # --------------------------------------------------------------------------
   # Application Health Extension
+  # --------------------------------------------------------------------------
+  # Reports instance health based on HTTP probe to /auth-sign-in.
+  # Used by Azure for monitoring and repair decisions.
+  # --------------------------------------------------------------------------
   extension {
     name                 = "HealthExtension"
     publisher            = "Microsoft.ManagedServices"
@@ -86,15 +107,22 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
     })
   }
 
-  # Assign a system-managed identity for Key Vault access
+  # --------------------------------------------------------------------------
+  # Managed Identity
+  # --------------------------------------------------------------------------
+  # System-assigned identity used for Key Vault access via RBAC.
+  # --------------------------------------------------------------------------
   identity {
     type = "SystemAssigned"
   }
 }
 
-# --------------------------------------------------------------------------------
-# AUTOSCALE: Adjust VMSS instance count based on CPU utilization
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Autoscale Settings
+# ------------------------------------------------------------------------------
+# Scales VMSS based on average CPU utilization.
+# Current profile defines min/default/max and a scale-up rule.
+# ------------------------------------------------------------------------------
 resource "azurerm_monitor_autoscale_setting" "rstudio_vmss_autoscale" {
   name                = "rstudio-vmss-autoscale"
   location            = data.azurerm_resource_group.cluster_rg.location
@@ -105,12 +133,11 @@ resource "azurerm_monitor_autoscale_setting" "rstudio_vmss_autoscale" {
     name = "default"
 
     capacity {
-      minimum = 1  # Lower bound (ensure at least one VM)
-      default = 2  # Default steady-state
-      maximum = 4  # Upper bound (prevent runaway scaling)
+      minimum = 1
+      default = 2
+      maximum = 4
     }
 
-    # Rule: Scale up when CPU utilization > 60% for 1 minute
     rule {
       metric_trigger {
         metric_name        = "Percentage CPU"
@@ -133,9 +160,11 @@ resource "azurerm_monitor_autoscale_setting" "rstudio_vmss_autoscale" {
   }
 }
 
-# --------------------------------------------------------------------------------
-# ROLE ASSIGNMENT: Permit VMSS identity to read Key Vault secrets
-# --------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Key Vault Role Assignment
+# ------------------------------------------------------------------------------
+# Grants VMSS identity read access to Key Vault secrets.
+# ------------------------------------------------------------------------------
 resource "azurerm_role_assignment" "vm_vmss_key_vault_secrets_user" {
   scope                = data.azurerm_key_vault.ad_key_vault.id
   role_definition_name = "Key Vault Secrets User"

@@ -1,83 +1,76 @@
-# ==================================================================================================
-# AzureRM Provider Configuration and Core Data Sources
-# - Configures Azure provider with Key Vault options
-# - Defines key input variables (Resource Group, Vault name)
-# - Fetches subscription, client, resource group, VNet, subnet, and Key Vault details
-# ==================================================================================================
+# ==============================================================================
+# File: main.tf
+# ==============================================================================
+# Purpose:
+#   - Configure AzureRM provider behavior for this deployment.
+#   - Retrieve subscription and authenticated client context.
+#   - Reference existing resource groups, network, subnet, and Key Vault.
+#
+# Notes:
+#   - This module assumes core infrastructure already exists.
+#   - All resources referenced here are data sources, not created.
+# ==============================================================================
 
-# --------------------------------------------------------------------------------------------------
-# Configure AzureRM provider (required for all Azure deployments)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# AzureRM Provider
+# Configures provider-level behavior for Key Vault lifecycle handling.
+# ------------------------------------------------------------------------------
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = true  # Immediately purge deleted Key Vaults (bypass soft-delete retention)
-      recover_soft_deleted_key_vaults = false # Do not auto-recover previously deleted Key Vaults
+      purge_soft_delete_on_destroy    = true
+      recover_soft_deleted_key_vaults = false
     }
   }
 }
 
-# --------------------------------------------------------------------------------------------------
-# Fetch subscription details (ID, name, etc.)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Subscription Context
+# Retrieves subscription metadata for the authenticated account.
+# ------------------------------------------------------------------------------
 data "azurerm_subscription" "primary" {}
 
-# --------------------------------------------------------------------------------------------------
-# Fetch details about the authenticated client (SPN or user identity)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Client Context
+# Retrieves tenant ID, object ID, and subscription for current identity.
+# ------------------------------------------------------------------------------
 data "azurerm_client_config" "current" {}
 
-# --------------------------------------------------------------------------------------------------
-# Input variable: Resource Group name
-# --------------------------------------------------------------------------------------------------
-variable "network_group_name" {
-  description = "The name of the Azure Resource Group for networking."
-  type        = string
-  default     = "rstudio-network-rg"
-}
-
-# --------------------------------------------------------------------------------------------------
-# Input variable: Key Vault name
-# - Can be set via CLI, TFVARS, or overridden at apply time
-# --------------------------------------------------------------------------------------------------
-variable "vault_name" {
-  description = "The name of the Azure Key Vault for storing secrets"
-  type        = string
-  # default   = "ad-key-vault-qcxu2ksw"  # Example value (commented out so it's explicitly required)
-}
-
-# --------------------------------------------------------------------------------------------------
-# Fetch details about the specified Resource Group
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Resource Groups
+# References existing resource groups for networking and servers.
+# ------------------------------------------------------------------------------
 data "azurerm_resource_group" "ad" {
   name = var.network_group_name
 }
 
 data "azurerm_resource_group" "servers" {
-  name = "rstudio-servers-rg"
+  name = var.servers_group_name
 }
 
-
-# --------------------------------------------------------------------------------------------------
-# Fetch details about existing Virtual Network
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Virtual Network
+# References the existing AD virtual network.
+# ------------------------------------------------------------------------------
 data "azurerm_virtual_network" "ad_vnet" {
   name                = "ad-vnet"
   resource_group_name = data.azurerm_resource_group.ad.name
 }
 
-# --------------------------------------------------------------------------------------------------
-# Fetch details about existing Subnet within the VNet
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Subnet
+# References the VM subnet within the AD virtual network.
+# ------------------------------------------------------------------------------
 data "azurerm_subnet" "vm_subnet" {
   name                 = "vm-subnet"
   resource_group_name  = data.azurerm_resource_group.ad.name
   virtual_network_name = data.azurerm_virtual_network.ad_vnet.name
 }
 
-# --------------------------------------------------------------------------------------------------
-# Fetch details about the existing Key Vault
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Key Vault
+# References the existing Key Vault used for credential storage.
+# ------------------------------------------------------------------------------
 data "azurerm_key_vault" "ad_key_vault" {
   name                = var.vault_name
   resource_group_name = var.network_group_name

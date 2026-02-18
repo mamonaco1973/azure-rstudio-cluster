@@ -1,43 +1,61 @@
-# ==================================================================================================
-# Storage Account for Deployment Scripts
-# - Creates a storage account and private container for scripts
-# - Renders PowerShell domain join script from template
-# - Uploads rendered script as blob and generates short-lived SAS token
-# ==================================================================================================
+# ==============================================================================
+# File: storage.tf
+# ==============================================================================
+# Purpose:
+#   - Create storage account for deployment scripts.
+#   - Store rendered AD join script in private blob container.
+#   - Generate short-lived SAS token for secure bootstrap access.
+#
+# Notes:
+#   - Storage account name must be globally unique.
+#   - Container access is private; SAS grants temporary read.
+#   - SAS start time is backdated to reduce clock-skew failures.
+# ==============================================================================
 
-# --------------------------------------------------------------------------------------------------
-# Generate a random string for use in the storage account name
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Random Storage Name Suffix
+# ------------------------------------------------------------------------------
+# Generates lowercase alphanumeric suffix for global uniqueness.
+# ------------------------------------------------------------------------------
 resource "random_string" "storage_name" {
-  length  = 10    # 10 characters
-  upper   = false # Lowercase only
-  special = false # No special characters
-  numeric = true  # Include numbers
+  length  = 10
+  upper   = false
+  special = false
+  numeric = true
 }
 
-# --------------------------------------------------------------------------------------------------
-# Create storage account to host deployment scripts
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Storage Account
+# ------------------------------------------------------------------------------
+# Standard/LRS is cost-effective and sufficient for script hosting.
+# ------------------------------------------------------------------------------
 resource "azurerm_storage_account" "scripts_storage" {
-  name                     = "vmscripts${random_string.storage_name.result}" # Ensure global uniqueness
+  name                     = "vmscripts${random_string.storage_name.result}"
   resource_group_name      = data.azurerm_resource_group.servers.name
   location                 = data.azurerm_resource_group.servers.location
-  account_tier             = "Standard" # Standard = cost-effective option
-  account_replication_type = "LRS"      # Locally redundant storage (single region replication)
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
 }
 
-# --------------------------------------------------------------------------------------------------
-# Create private container for storing deployment scripts
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Private Container
+# ------------------------------------------------------------------------------
+# No anonymous access; scripts accessible only via SAS token.
+# ------------------------------------------------------------------------------
 resource "azurerm_storage_container" "scripts" {
   name                  = "scripts"
   storage_account_id    = azurerm_storage_account.scripts_storage.id
-  container_access_type = "private" # No anonymous access
+  container_access_type = "private"
 }
 
-# --------------------------------------------------------------------------------------------------
-# Render AD join PowerShell script from template (inject Key Vault + domain values)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Render AD Join Script
+# ------------------------------------------------------------------------------
+# Injects:
+#   - Key Vault name
+#   - Domain FQDN
+#   - NFS gateway private IP
+# ------------------------------------------------------------------------------
 locals {
   ad_join_script = templatefile("./scripts/ad_join.ps1.template", {
     vault_name  = data.azurerm_key_vault.ad_key_vault.name
@@ -46,53 +64,60 @@ locals {
   })
 }
 
-# --------------------------------------------------------------------------------------------------
-# Save the rendered script locally (ad_join.ps1)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Write Rendered Script Locally
+# ------------------------------------------------------------------------------
 resource "local_file" "ad_join_rendered" {
   filename = "./scripts/ad_join.ps1"
   content  = local.ad_join_script
 }
 
-# --------------------------------------------------------------------------------------------------
-# Upload the rendered script into Azure Storage (Blob)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Upload Script as Blob
+# ------------------------------------------------------------------------------
+# Block blob is appropriate for discrete script files.
+# Uncomment metadata block to force re-upload on every apply.
+# ------------------------------------------------------------------------------
 resource "azurerm_storage_blob" "ad_join_script" {
   name                   = "ad-join.ps1"
   storage_account_name   = azurerm_storage_account.scripts_storage.name
   storage_container_name = azurerm_storage_container.scripts.name
-  type                   = "Block" # Block blob (best for discrete files)
+  type                   = "Block"
   source                 = local_file.ad_join_rendered.filename
+
   #metadata = {
-  #  force_update = "${timestamp()}" # Forces re-upload whenever timestamp changes
+  #  force_update = "${timestamp()}" # Forces re-upload on each apply
   #}
 }
 
-# --------------------------------------------------------------------------------------------------
-# Generate a short-lived SAS token for secure script access
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# SAS Token (Read-Only, Short-Lived)
+# ------------------------------------------------------------------------------
+# Valid from 24h in the past to 72h in the future.
+# ------------------------------------------------------------------------------
 data "azurerm_storage_account_sas" "script_sas" {
   connection_string = azurerm_storage_account.scripts_storage.primary_connection_string
 
   resource_types {
-    service   = false # No service-level access
-    container = false # No container-level access
-    object    = true  # Object-level (the script file itself)
+    service   = false
+    container = false
+    object    = true
   }
 
   services {
-    blob  = true # Enable blob access
+    blob  = true
     queue = false
     table = false
     file  = false
   }
 
-  # Validity period: starts 24h before now (buffer) and expires 72h after now
-  start  = formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'", timeadd(timestamp(), "-24h"))
-  expiry = formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'", timeadd(timestamp(), "72h"))
+  start  =    formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'",
+      timeadd(timestamp(), "-24h"))
+  expiry =    formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'",
+      timeadd(timestamp(), "72h"))
 
   permissions {
-    read    = true # Allow read access (required to download script)
+    read    = true
     write   = false
     delete  = false
     list    = false

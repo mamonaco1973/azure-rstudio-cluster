@@ -1,40 +1,43 @@
-# ==================================================================================================
-# User Credential Management
+# ==============================================================================
+# File: accounts.tf
+# ------------------------------------------------------------------------------
 # Purpose:
-#   - Automatically generate strong random passwords for Active Directory (AD) users.
-#   - Store those credentials securely in Azure Key Vault as JSON objects.
+#   - Generate strong random passwords for AD users.
+#   - Store credentials as JSON secrets in Azure Key Vault.
 #
 # Notes:
-#   - Each user gets a unique random password (24 characters by default).
-#   - Passwords are stored in Key Vault under structured secrets, making retrieval easy for automation.
-#   - "override_special" restricts special characters to avoid compatibility issues with AD and scripts.
-#   - All secrets depend on the Key Vault access role assignment to ensure permissions are applied first.
-# ==================================================================================================
+#   - Each user receives a unique 24-character password.
+#   - override_special restricts special chars for AD compatibility.
+#   - Secrets depend on Key Vault RBAC assignment.
+# ==============================================================================
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # User: John Smith (jsmith)
-# Generates a password and stores AD credentials in Key Vault.
-# --------------------------------------------------------------------------------------------------
+# Generates password and stores AD credentials in Key Vault.
+# ------------------------------------------------------------------------------
+
 resource "random_password" "jsmith_password" {
-  length           = 24     # Secure 24-char password
+  length           = 24     # 24-character secure password
   special          = true   # Include special characters
-  override_special = "!@#%" # Restrict to safe AD-compatible characters
+  override_special = "!@#%" # AD-compatible special characters
 }
 
 resource "azurerm_key_vault_secret" "jsmith_secret" {
-  name = "jsmith-ad-credentials" # Key Vault secret name
-  value = jsonencode({           # Store as JSON (username + password)
+  name         = "jsmith-ad-credentials" # Secret name in Key Vault
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
+  value = jsonencode({
     username = "jsmith@${var.dns_zone}"
     password = random_password.jsmith_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json" # Marks secret type as JSON
 }
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # User: Emily Davis (edavis)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 resource "random_password" "edavis_password" {
   length           = 24
   special          = true
@@ -42,19 +45,21 @@ resource "random_password" "edavis_password" {
 }
 
 resource "azurerm_key_vault_secret" "edavis_secret" {
-  name = "edavis-ad-credentials"
+  name         = "edavis-ad-credentials"
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
   value = jsonencode({
     username = "edavis@${var.dns_zone}"
     password = random_password.edavis_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json"
 }
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # User: Raj Patel (rpatel)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 resource "random_password" "rpatel_password" {
   length           = 24
   special          = true
@@ -62,19 +67,21 @@ resource "random_password" "rpatel_password" {
 }
 
 resource "azurerm_key_vault_secret" "rpatel_secret" {
-  name = "rpatel-ad-credentials"
+  name         = "rpatel-ad-credentials"
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
   value = jsonencode({
     username = "rpatel@${var.dns_zone}"
     password = random_password.rpatel_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json"
 }
 
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # User: Amit Kumar (akumar)
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 resource "random_password" "akumar_password" {
   length           = 24
   special          = true
@@ -82,22 +89,22 @@ resource "random_password" "akumar_password" {
 }
 
 resource "azurerm_key_vault_secret" "akumar_secret" {
-  name = "akumar-ad-credentials"
+  name         = "akumar-ad-credentials"
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
   value = jsonencode({
     username = "akumar@${var.dns_zone}"
     password = random_password.akumar_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json"
 }
 
-# --------------------------------------------------------------------------------------------------
-# User: sysadmin (local AD service account)
-# Purpose:
-#   - Generic sysadmin account for automation and non-user-specific tasks.
-#   - Stored without domain suffix since it’s intended as a local account.
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# User: sysadmin
+# Local automation account (non-domain).
+# ------------------------------------------------------------------------------
+
 resource "random_password" "sysadmin_password" {
   length           = 24
   special          = true
@@ -105,35 +112,36 @@ resource "random_password" "sysadmin_password" {
 }
 
 resource "azurerm_key_vault_secret" "sysadmin_secret" {
-  name = "sysadmin-credentials"
+  name         = "sysadmin-credentials"
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
   value = jsonencode({
     username = "sysadmin"
     password = random_password.sysadmin_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json"
 }
 
-# --------------------------------------------------------------------------------------------------
-# User: Admin (AD Domain Administrator)
-# Purpose:
-#   - Special account for AD domain administration.
-#   - Uses slightly different special characters to align with AD domain password policies.
-# --------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# User: Admin
+# AD domain administrator account.
+# ------------------------------------------------------------------------------
+
 resource "random_password" "admin_password" {
   length           = 24
   special          = true
-  override_special = "-_." # Different set of allowed special characters
+  override_special = "-_" # Alternate AD-compatible characters
 }
 
 resource "azurerm_key_vault_secret" "admin_secret" {
-  name = "admin-ad-credentials"
+  name         = "admin-ad-credentials"
+  key_vault_id = azurerm_key_vault.ad_key_vault.id
+  depends_on   = [azurerm_role_assignment.kv_role_assignment]
+  content_type = "application/json"
+
   value = jsonencode({
     username = "Admin@${var.dns_zone}"
     password = random_password.admin_password.result
   })
-  key_vault_id = azurerm_key_vault.ad_key_vault.id
-  depends_on   = [azurerm_role_assignment.kv_role_assignment]
-  content_type = "application/json"
 }

@@ -1,36 +1,46 @@
-# ==========================================================================================
-# Azure Provider and Data Sources
-# ------------------------------------------------------------------------------------------
-# This configuration:
-#   - Defines the AzureRM provider (required boilerplate)
-#   - Retrieves subscription and client context for reference
-#   - Looks up existing resources (resource group, custom image, network, subnet, key vault)
-# ==========================================================================================
+# ==============================================================================
+# File: main.tf
+# ==============================================================================
+# Purpose:
+#   - Configure AzureRM provider.
+#   - Retrieve subscription and client execution context.
+#   - Reference existing resource groups, image, network, and Key Vault.
+#
+# Notes:
+#   - This module assumes core infrastructure already exists.
+#   - All resources defined here are data lookups only.
+# ==============================================================================
 
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Azure Provider
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Enables AzureRM provider with default feature configuration.
+# ------------------------------------------------------------------------------
 provider "azurerm" {
-  features {} # Required boilerplate to enable all default provider features
+  features {}
 }
 
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Subscription and Client Context
-# ------------------------------------------------------------------------------------------
-
-# Subscription metadata (e.g., ID, display name)
+# ------------------------------------------------------------------------------
+# Retrieves metadata about the active subscription and identity.
+# ------------------------------------------------------------------------------
 data "azurerm_subscription" "primary" {}
 
-# Client metadata (e.g., tenant ID, object ID, client ID, subscription)
 data "azurerm_client_config" "current" {}
 
 
-# ------------------------------------------------------------------------------------------
-# Resource Group Lookups
-# - Existing resource group used for image, network, and secrets
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Resource Groups
+# ------------------------------------------------------------------------------
+# cluster_rg:
+#   - Contains custom image and cluster-related resources.
+#
+# project_rg:
+#   - Contains networking and shared infrastructure components.
+# ------------------------------------------------------------------------------
 data "azurerm_resource_group" "cluster_rg" {
   name = var.cluster_group_name
 }
@@ -39,50 +49,59 @@ data "azurerm_resource_group" "project_rg" {
   name = var.project_group_name
 }
 
-# ------------------------------------------------------------------------------------------
-# Custom Image Lookup
-# - Existing managed image (used as VM source)
-# ------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Managed Image Lookup
+# ------------------------------------------------------------------------------
+# References prebuilt RStudio Managed Image created by Packer.
+# Used as source image for VM or VM Scale Set deployments.
+# ------------------------------------------------------------------------------
 data "azurerm_image" "rstudio_image" {
   name                = var.rstudio_image_name
   resource_group_name = data.azurerm_resource_group.cluster_rg.name
 }
 
 
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Virtual Network Lookup
-# - Existing VNet where resources will be placed
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# References existing VNet where cluster resources are deployed.
+# ------------------------------------------------------------------------------
 data "azurerm_virtual_network" "cluster_vnet" {
   name                = var.vnet_name
   resource_group_name = data.azurerm_resource_group.project_rg.name
 }
 
 
-# ------------------------------------------------------------------------------------------
-# Subnet Lookup
-# - Existing subnet within the target virtual network
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Cluster Subnet Lookup
+# ------------------------------------------------------------------------------
+# Subnet used by RStudio VM instances or VM Scale Set.
+# ------------------------------------------------------------------------------
 data "azurerm_subnet" "cluster_subnet" {
   name                 = var.subnet_name
   virtual_network_name = data.azurerm_virtual_network.cluster_vnet.name
   resource_group_name  = data.azurerm_resource_group.project_rg.name
 }
 
-# ------------------------------------------------------------------------------------------
-# Subnet Lookup
-# - Existing subnet within the target virtual network
-# ------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Application Gateway Subnet Lookup
+# ------------------------------------------------------------------------------
+# Dedicated subnet required for Azure Application Gateway.
+# ------------------------------------------------------------------------------
 data "azurerm_subnet" "app_gateway_subnet" {
   name                 = "app-gateway-subnet"
   virtual_network_name = data.azurerm_virtual_network.cluster_vnet.name
   resource_group_name  = data.azurerm_resource_group.project_rg.name
 }
 
-# ------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Key Vault Lookup
-# - Existing Key Vault used for credentials and secrets
-# ------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# References existing Key Vault used for credentials and secrets.
+# ------------------------------------------------------------------------------
 data "azurerm_key_vault" "ad_key_vault" {
   name                = var.vault_name
   resource_group_name = data.azurerm_resource_group.project_rg.name
