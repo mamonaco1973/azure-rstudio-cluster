@@ -91,3 +91,9 @@ variable "vault_name" {
   type        = string
   # default   = "ad-key-vault-qcxu2ksw"
 }
+
+variable "resource_group_location" {
+  description = "Azure region for resource group."
+  type        = string
+  default     = "Central US"
+}
