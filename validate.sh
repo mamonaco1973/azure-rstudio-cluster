@@ -123,6 +123,9 @@ echo ""
 
 printf "%-28s %s\n" "NOTE: Windows RDP Host:"   "${windows_fqdn}"
 printf "%-28s %s\n" "NOTE: NFS Gateway Host:"   "${linux_fqdn}"
+
+echo ""
+
 printf "%-28s %s\n" "NOTE: RStudio URL:"        "http://${rstudio_dns}"
 
 echo ""
