@@ -166,8 +166,6 @@ resource "azurerm_subnet" "app_gateway_subnet" {
   resource_group_name  = azurerm_resource_group.ad.name
   virtual_network_name = azurerm_virtual_network.ad_vnet.name
   address_prefixes     = ["10.0.1.128/25"]
-
-  depends_on = [azurerm_subnet.bastion_subnet]
 }
 
 # ------------------------------------------------------------------------------
@@ -266,7 +264,6 @@ resource "azurerm_subnet_network_security_group_association" "app_gateway_nsg_as
   network_security_group_id = azurerm_network_security_group.rstudio_gateway_nsg.id
 
   depends_on = [
-    azurerm_subnet.app_gateway_subnet,
-    azurerm_bastion_host.bastion_host,
+    azurerm_subnet.app_gateway_subnet
   ]
 }
