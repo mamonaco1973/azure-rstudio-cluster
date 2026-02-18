@@ -79,7 +79,7 @@ variable "bastion_support" {
 variable "resource_group_name" {
   description = "Azure resource group name."
   type        = string
-  default     = "rstudio-project-rg"
+  default     = "rstudio-network-rg"
 }
 
 variable "resource_group_location" {
