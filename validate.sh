@@ -1,22 +1,6 @@
 #!/bin/bash
 # =========================================================================================
 # validate.sh - RStudio VMSS Quick Start Validation (Azure)
-# -----------------------------------------------------------------------------------------
-# Purpose:
-#   - Poll Azure Application Gateway backend health until a healthy RStudio
-#     server is found.
-#   - Output Quick Start endpoints in consistent formatted layout.
-#
-# Scope:
-#   - Waits for healthy backend servers.
-#   - Discovers:
-#       - Windows admin host (RDP)
-#       - Linux NFS gateway host
-#       - Key Vault (if present)
-#       - RStudio App Gateway public URL
-#
-# Requirements:
-#   - Azure CLI installed and authenticated (az login)
 # =========================================================================================
 
 set -euo pipefail
@@ -26,6 +10,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------------------
 RESOURCE_GROUP="rstudio-vmss-rg"
 SERVERS_RESOURCE_GROUP="rstudio-servers-rg"
+NETWORK_RESOURCE_GROUP="rstudio-network-rg"
 
 APP_GATEWAY_NAME="rstudio-app-gateway"
 APP_GATEWAY_PIP_NAME="rstudio-app-gateway-pip"
@@ -99,7 +84,9 @@ done
 # -----------------------------------------------------------------------------------------
 windows_fqdn="$(get_public_fqdn_by_domain_label_prefix "${SERVERS_RESOURCE_GROUP}" "${WIN_LABEL_PREFIX}")"
 linux_fqdn="$(get_public_fqdn_by_domain_label_prefix "${SERVERS_RESOURCE_GROUP}" "${LINUX_LABEL_PREFIX}")"
-vault_name="$(get_key_vault_by_prefix "${RESOURCE_GROUP}" "${KEYVAULT_PREFIX}")"
+
+# Key Vault is in the network RG (NOT the VMSS RG)
+vault_name="$(get_key_vault_by_prefix "${NETWORK_RESOURCE_GROUP}" "${KEYVAULT_PREFIX}")"
 
 rstudio_dns="$(az network public-ip show \
   --name "${APP_GATEWAY_PIP_NAME}" \
@@ -117,6 +104,7 @@ echo "==========================================================================
 echo ""
 
 printf "%-28s %s\n" "NOTE: Resource Group:"     "${RESOURCE_GROUP}"
+printf "%-28s %s\n" "NOTE: Network Group:"      "${NETWORK_RESOURCE_GROUP}"
 printf "%-28s %s\n" "NOTE: Key Vault:"          "${vault_name}"
 
 echo ""
