@@ -44,11 +44,6 @@ data "azurerm_resource_group" "ad" {
   name = var.network_group_name
 }
 
-resource "azurerm_resource_group" "ad" {
-  name     = var.network_group_name
-  location = var.resource_group_location
-}
-
 data "azurerm_resource_group" "servers" {
   name = var.servers_group_name
 }
