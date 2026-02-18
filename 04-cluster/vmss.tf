@@ -26,7 +26,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
   location            = data.azurerm_resource_group.cluster_rg.location
   resource_group_name = data.azurerm_resource_group.cluster_rg.name
 
-  sku                            = "Standard_DS1_v2"
+  sku                            = "Standard_D2s_v3"
   instances                      = 2
   admin_username                 = "ubuntu"
   admin_password                 = var.ubuntu_password
