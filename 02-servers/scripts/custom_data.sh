@@ -66,10 +66,15 @@ mkdir -p /nfs/home
 mkdir -p /nfs/data
 mkdir -p /nfs/rlibs
 
-echo "${storage_account}.file.core.windows.net:/${storage_account}/nfs/home /home aznfs vers=4.1,defaults 0 0" | \
-  sudo tee -a /etc/fstab > /dev/null
-systemctl daemon-reload
-mount /home
+mkdir -p /nfs/home
+mkdir -p /nfs/data
+# echo "${storage_account}.file.core.windows.net:/${storage_account}/nfs/home /home aznfs vers=4.1,defaults 0 0" | \
+#   sudo tee -a /etc/fstab > /dev/null
+# systemctl daemon-reload
+# mount /home
+
+mv /home /home.local
+ln -s /nfs/home /home
 
 # ---------------------------------------------------------------------------------
 # Section 5: Configure AD as the identity provider
