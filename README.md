@@ -1,4 +1,4 @@
-# Azure RStudio Cluster with Azure Files-Backed Shared Libraries  
+# Azure RStudio Cluster 
 
 This project extends the original **Azure Mini Active Directory** lab by deploying an **RStudio Server cluster** on Microsoft Azure. The cluster is designed for data science and analytics workloads, where multiple users need a scalable, domain-joined environment with consistent package management.  
 
@@ -122,7 +122,7 @@ The domain controller provisions **sample users and groups** via Terraform templ
 Follow these steps to provision a new user in the Active Directory domain and validate their access to the RStudio cluster:
 
 1. **Connect to the Domain Controller**  
-   - Log into the **`win-ad`** server via **Bastion**
+   - Log into the **`win-ad`** server via RDP.
    - Use the `rpatel` or `jsmith` credentials that were provisioned during cluster deployment.  
 
 2. **Launch Active Directory Users and Computers (ADUC)**  
@@ -164,7 +164,7 @@ Follow these steps to provision a new user in the Active Directory domain and va
      - **us** (or other geographic/departmental group as applicable).  
 
 8. **Validate User on Linux**  
-   - Open an **Bastion** session to the **`nfs-gateway`** instance.  
+   - Open an **SSH** session to the **`nfs-gateway`** instance.  
    - Run the following command to confirm the user’s identity mapping:  
      ```bash
      id mcloud
