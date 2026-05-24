@@ -250,10 +250,11 @@ chgrp ${force_group} /nfs
 chgrp ${force_group} /nfs/data
 chgrp ${force_group} /nfs/rlibs
 
-chmod 2770 /nfs
+chmod 2775 /nfs
 chmod 2775 /nfs/rlibs
 chmod 2770 /nfs/data
 chmod 700 /home/*
+chown -R ubuntu:ubuntu /home/ubuntu
 
 cd /nfs
 git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git
