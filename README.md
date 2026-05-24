@@ -1,18 +1,18 @@
-# Azure RStudio Cluster 
+# Azure RStudio Cluster
 
-This project extends the original **Azure Mini Active Directory** lab by deploying an **RStudio Server cluster** on Microsoft Azure. The cluster is designed for data science and analytics workloads, where multiple users need a scalable, domain-joined environment with consistent package management.  
+Standing up a shared RStudio environment shouldn't take a week or cost a fortune.
 
-![RStudio](rstudio.png)  
+This project deploys a production-ready RStudio Server cluster on Azure — built for small teams that need a controlled, consistent R environment without the overhead of managing individual workstations or ad-hoc VMs. The whole stack deploys in one script and is up and running in about 30 minutes.
 
-Instead of relying only on per-user libraries stored on ephemeral VM disks, this solution integrates **Azure Files** as a shared package and data backend. This allows RStudio nodes in a **Virtual Machine Scale Set (VMSS)** to mount a common Azure Files share, ensuring that installed R packages and project files are accessible across all nodes.  
+![RStudio](rstudio.png)
 
-### Key capabilities demonstrated:  
+Users authenticate with named domain accounts, every node runs an identical environment, and R packages installed by admins are instantly available across the entire cluster via a shared Azure Files NFS mount.
 
-1. **RStudio Server Cluster with Application Gateway** – RStudio Server (Open Source Edition) deployed across multiple VM instances, fronted by an Azure Application Gateway for high availability and seamless user access.  
-2. **Azure Files-Backed Shared Library** – Azure Files share mounted at `/nfs/rlibs` (Linux NFS mount) and injected into `.libPaths()`, enabling shared R package storage across the cluster.  
-3. **Mini Active Directory Integration** – A Samba-based mini-AD domain controller provides authentication and DNS, so RStudio logins are domain-based and centrally managed.  
+### Key capabilities demonstrated:
 
-Together, this architecture provides a reproducible, cloud-native RStudio environment where users get both personal home-directory libraries and access to a shared, scalable package repository.  
+1. **RStudio Server Cluster with Application Gateway** – RStudio Server (Open Source Edition) deployed across multiple VM instances, fronted by an Azure Application Gateway for high availability and seamless user access.
+2. **Azure Files-Backed Shared Library** – Azure Files share mounted at `/nfs/rlibs` and injected into `.libPaths()`, enabling shared R package storage across the cluster.
+3. **Built-in Authentication** – A lightweight Samba domain controller ships with the stack, providing named user logins and group-based permissions with no external identity service required.
 
 ![Azure RStudio Cluster](azure-rstudio-cluster.png)  
 ## Prerequisites  
@@ -58,17 +58,17 @@ When the deployment completes, the following resources are created:
 
 - **Resource Groups:**  
   - **rstudio-mini-ad-rg** - Mini-AD components
-  - **rstudio-network-rg** – Networking, Bastion, and Key Vault  
+  - **rstudio-network-rg** – Networking and Key Vault  
   - **rstudio-servers-rg** – Domain-joined Linux/Windows servers and storage integration  
   - **rstudio-vmss-rg** – RStudio VM Scale Set (VMSS), Application Gateway, and related cluster infra  
 
 - **Networking:**  
-  - A VNet with dedicated subnets for Active Directory, VMSS cluster nodes, Bastion, and Application Gateway  
-  - Azure Bastion for secure RDP/SSH access without public IPs  
-  - Route tables configured for outbound internet access, AD lookups, and storage access  
+  - A VNet with dedicated subnets for Active Directory, VMSS cluster nodes, and Application Gateway  
+  - NAT Gateway for deterministic outbound internet access  
+  - An `AzureBastionSubnet` is pre-provisioned; Azure Bastion deploys only when `bastion_support=true` (default: false)  
 
 - **Security & Identity:**  
-  - NSGs for domain controller, VMSS nodes, bastion, and storage endpoints  
+  - NSGs for domain controller, VMSS nodes, and storage endpoints  
   - Azure Key Vault for credential storage (admin + user accounts)  
   - Managed Identities for VMSS instances to retrieve secrets from Key Vault  
 
@@ -178,13 +178,13 @@ Follow these steps to provision a new user in the Active Directory domain and va
    - Log in with the new AD credentials.  
 
 10. **Verify Permissions**  
-   - By default, the new user is **not** a member of the `rstudio-admin` group.  
-   - Attempting to install packages into the **shared library path `/nfs/rlibs`** should fail with a **“Permission denied”** error.  
+   - By default, the new user is **not** a member of the `rstudio-admins` group.  
+   - Attempting to install packages into the **shared library path `/nfs/rlibs`** should fail with a **”Permission denied”** error.  
    - This confirms the user is restricted to installing packages in their **personal user library** only.  
 
 ---
 
-✅ **Note:** If you need the user to have administrative rights (e.g., the ability to install packages into the shared library), add them to the **rstudio-admin** group in addition to `rstudio-users`.
+✅ **Note:** If you need the user to have administrative rights (e.g., the ability to install packages into the shared library), add them to the **rstudio-admins** group in addition to `rstudio-users`.
 
 ### Clean Up  
 
