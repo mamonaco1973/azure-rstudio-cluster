@@ -17,20 +17,21 @@
 # ------------------------------------------------------------------------------
 
 resource "random_password" "jsmith_password" {
-  length           = 24     # 24-character secure password
-  special          = true   # Include special characters
-  override_special = "!@#%" # AD-compatible special characters
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "jsmith_secret" {
-  name         = "jsmith-ad-credentials" # Secret name in Key Vault
+  name         = "jsmith-ad-credentials"
   key_vault_id = azurerm_key_vault.ad_key_vault.id
   depends_on   = [azurerm_role_assignment.kv_role_assignment]
   content_type = "application/json"
 
   value = jsonencode({
     username = "jsmith@${var.dns_zone}"
-    password = random_password.jsmith_password.result
+    password = "A${random_password.jsmith_password.result}"
   })
 }
 
@@ -39,9 +40,10 @@ resource "azurerm_key_vault_secret" "jsmith_secret" {
 # ------------------------------------------------------------------------------
 
 resource "random_password" "edavis_password" {
-  length           = 24
+  length           = 23
   special          = true
-  override_special = "!@#%"
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "edavis_secret" {
@@ -52,7 +54,7 @@ resource "azurerm_key_vault_secret" "edavis_secret" {
 
   value = jsonencode({
     username = "edavis@${var.dns_zone}"
-    password = random_password.edavis_password.result
+    password = "A${random_password.edavis_password.result}"
   })
 }
 
@@ -61,9 +63,10 @@ resource "azurerm_key_vault_secret" "edavis_secret" {
 # ------------------------------------------------------------------------------
 
 resource "random_password" "rpatel_password" {
-  length           = 24
+  length           = 23
   special          = true
-  override_special = "!@#%"
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "rpatel_secret" {
@@ -74,7 +77,7 @@ resource "azurerm_key_vault_secret" "rpatel_secret" {
 
   value = jsonencode({
     username = "rpatel@${var.dns_zone}"
-    password = random_password.rpatel_password.result
+    password = "A${random_password.rpatel_password.result}"
   })
 }
 
@@ -83,9 +86,10 @@ resource "azurerm_key_vault_secret" "rpatel_secret" {
 # ------------------------------------------------------------------------------
 
 resource "random_password" "akumar_password" {
-  length           = 24
+  length           = 23
   special          = true
-  override_special = "!@#%"
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "akumar_secret" {
@@ -96,7 +100,7 @@ resource "azurerm_key_vault_secret" "akumar_secret" {
 
   value = jsonencode({
     username = "akumar@${var.dns_zone}"
-    password = random_password.akumar_password.result
+    password = "A${random_password.akumar_password.result}"
   })
 }
 
@@ -106,9 +110,10 @@ resource "azurerm_key_vault_secret" "akumar_secret" {
 # ------------------------------------------------------------------------------
 
 resource "random_password" "sysadmin_password" {
-  length           = 24
+  length           = 23
   special          = true
-  override_special = "!@#%"
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "sysadmin_secret" {
@@ -119,7 +124,7 @@ resource "azurerm_key_vault_secret" "sysadmin_secret" {
 
   value = jsonencode({
     username = "sysadmin"
-    password = random_password.sysadmin_password.result
+    password = "A${random_password.sysadmin_password.result}"
   })
 }
 
@@ -129,9 +134,10 @@ resource "azurerm_key_vault_secret" "sysadmin_secret" {
 # ------------------------------------------------------------------------------
 
 resource "random_password" "admin_password" {
-  length           = 24
+  length           = 23
   special          = true
-  override_special = "-_" # Alternate AD-compatible characters
+  override_special = "-_"
+  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "admin_secret" {
@@ -142,6 +148,6 @@ resource "azurerm_key_vault_secret" "admin_secret" {
 
   value = jsonencode({
     username = "Admin@${var.dns_zone}"
-    password = random_password.admin_password.result
+    password = "A${random_password.admin_password.result}"
   })
 }
