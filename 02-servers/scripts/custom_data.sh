@@ -254,9 +254,9 @@ chmod 2775 /nfs
 chmod 2775 /nfs/rlibs
 chmod 2770 /nfs/data
 chmod 700 /home/*
-chown -R ubuntu:ubuntu /home/ubuntu
 
 cd /nfs
 git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git
 chmod -R 775 azure-rstudio-cluster
-chgrp -R mcloud-users azure-rstudio-cluster
+chgrp -R rstudio-users azure-rstudio-cluster
+chown -R ubuntu:ubuntu /home/ubuntu 
