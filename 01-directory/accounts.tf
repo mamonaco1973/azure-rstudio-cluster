@@ -6,15 +6,14 @@
 #   - Store credentials as JSON secrets in Azure Key Vault.
 #
 # Notes:
-#   - Each user receives a unique 24-character password.
-#   - override_special restricts special chars for AD compatibility.
+#   - Each user receives a unique 24-character password (23 random + "A" prefix).
+#   - override_special restricts special chars to avoid shell interpolation issues.
 #   - Secrets depend on Key Vault RBAC assignment.
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-# User: John Smith (jsmith)
-# Generates password and stores AD credentials in Key Vault.
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# Password Resources
+# ==============================================================================
 
 resource "random_password" "jsmith_password" {
   length           = 23
@@ -22,6 +21,61 @@ resource "random_password" "jsmith_password" {
   override_special = "-_"
   min_special      = 1
 }
+
+resource "random_password" "edavis_password" {
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+}
+
+resource "random_password" "rpatel_password" {
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+}
+
+resource "random_password" "akumar_password" {
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+}
+
+resource "random_password" "sysadmin_password" {
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+}
+
+resource "random_password" "admin_password" {
+  length           = 23
+  special          = true
+  override_special = "-_"
+  min_special      = 1
+}
+
+# ==============================================================================
+# Safe Password Locals
+# Prepend "A" so the first character is always a known-safe uppercase letter.
+# Guarantees no password starts with "-" and satisfies AD complexity requirements.
+# Reference local.* everywhere passwords are used — never raw random_password.result.
+# ==============================================================================
+
+locals {
+  jsmith_password   = "A${random_password.jsmith_password.result}"
+  edavis_password   = "A${random_password.edavis_password.result}"
+  rpatel_password   = "A${random_password.rpatel_password.result}"
+  akumar_password   = "A${random_password.akumar_password.result}"
+  sysadmin_password = "A${random_password.sysadmin_password.result}"
+  admin_password    = "A${random_password.admin_password.result}"
+}
+
+# ==============================================================================
+# Key Vault Secrets
+# ==============================================================================
 
 resource "azurerm_key_vault_secret" "jsmith_secret" {
   name         = "jsmith-ad-credentials"
@@ -31,19 +85,8 @@ resource "azurerm_key_vault_secret" "jsmith_secret" {
 
   value = jsonencode({
     username = "jsmith@${var.dns_zone}"
-    password = "A${random_password.jsmith_password.result}"
+    password = local.jsmith_password
   })
-}
-
-# ------------------------------------------------------------------------------
-# User: Emily Davis (edavis)
-# ------------------------------------------------------------------------------
-
-resource "random_password" "edavis_password" {
-  length           = 23
-  special          = true
-  override_special = "-_"
-  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "edavis_secret" {
@@ -54,19 +97,8 @@ resource "azurerm_key_vault_secret" "edavis_secret" {
 
   value = jsonencode({
     username = "edavis@${var.dns_zone}"
-    password = "A${random_password.edavis_password.result}"
+    password = local.edavis_password
   })
-}
-
-# ------------------------------------------------------------------------------
-# User: Raj Patel (rpatel)
-# ------------------------------------------------------------------------------
-
-resource "random_password" "rpatel_password" {
-  length           = 23
-  special          = true
-  override_special = "-_"
-  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "rpatel_secret" {
@@ -77,19 +109,8 @@ resource "azurerm_key_vault_secret" "rpatel_secret" {
 
   value = jsonencode({
     username = "rpatel@${var.dns_zone}"
-    password = "A${random_password.rpatel_password.result}"
+    password = local.rpatel_password
   })
-}
-
-# ------------------------------------------------------------------------------
-# User: Amit Kumar (akumar)
-# ------------------------------------------------------------------------------
-
-resource "random_password" "akumar_password" {
-  length           = 23
-  special          = true
-  override_special = "-_"
-  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "akumar_secret" {
@@ -100,20 +121,8 @@ resource "azurerm_key_vault_secret" "akumar_secret" {
 
   value = jsonencode({
     username = "akumar@${var.dns_zone}"
-    password = "A${random_password.akumar_password.result}"
+    password = local.akumar_password
   })
-}
-
-# ------------------------------------------------------------------------------
-# User: sysadmin
-# Local automation account (non-domain).
-# ------------------------------------------------------------------------------
-
-resource "random_password" "sysadmin_password" {
-  length           = 23
-  special          = true
-  override_special = "-_"
-  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "sysadmin_secret" {
@@ -124,20 +133,8 @@ resource "azurerm_key_vault_secret" "sysadmin_secret" {
 
   value = jsonencode({
     username = "sysadmin"
-    password = "A${random_password.sysadmin_password.result}"
+    password = local.sysadmin_password
   })
-}
-
-# ------------------------------------------------------------------------------
-# User: Admin
-# AD domain administrator account.
-# ------------------------------------------------------------------------------
-
-resource "random_password" "admin_password" {
-  length           = 23
-  special          = true
-  override_special = "-_"
-  min_special      = 1
 }
 
 resource "azurerm_key_vault_secret" "admin_secret" {
@@ -148,6 +145,6 @@ resource "azurerm_key_vault_secret" "admin_secret" {
 
   value = jsonencode({
     username = "Admin@${var.dns_zone}"
-    password = "A${random_password.admin_password.result}"
+    password = local.admin_password
   })
 }
