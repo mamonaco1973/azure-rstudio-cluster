@@ -123,7 +123,7 @@ resource "azurerm_linux_virtual_machine" "nfs_gateway" {
     vault_name      = data.azurerm_key_vault.ad_key_vault.name
     domain_fqdn     = var.dns_zone
     netbios         = var.netbios
-    force_group     = "rstudio-users"
+    force_group     = "${lower(var.netbios)}-users"
     realm           = var.realm
     storage_account = azurerm_storage_account.nfs_storage_account.name
   }))

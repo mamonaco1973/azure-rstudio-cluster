@@ -124,8 +124,8 @@ local({
   .libPaths(c(userlib, nfs, .libPaths()))
 })
 EOF
-echo "NOTE: [rlibs] setting rstudio-admins group on /nfs/rlibs"
-chgrp rstudio-admins /nfs/rlibs
+echo "NOTE: [rlibs] setting ${lower(netbios)}-admins group on /nfs/rlibs"
+chgrp ${lower(netbios)}-admins /nfs/rlibs
 echo "NOTE: [rlibs] done"
 
 echo "NOTE: rstudio-booter complete: $(date -Is)"

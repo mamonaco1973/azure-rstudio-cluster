@@ -44,7 +44,7 @@ Add-Computer -DomainName "${domain_fqdn}" -Credential $cred -Force
 # ------------------------------------------------------------
 
 Write-Output "Add users to the Remote Desktop Users Group"
-$domainGroup = "RSTUDIO\rstudio-users"
+$domainGroup = "${netbios}\${lower(netbios)}-users"
 $maxRetries = 10
 $retryDelay = 30
 

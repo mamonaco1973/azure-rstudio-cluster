@@ -186,6 +186,21 @@ Follow these steps to provision a new user in the Active Directory domain and va
 
 ✅ **Note:** If you need the user to have administrative rights (e.g., the ability to install packages into the shared library), add them to the **rstudio-admins** group in addition to `rstudio-users`.
 
+### Changing the Domain Name
+
+The default domain is `rstudio.mikecloud.com`. The recommended way to override it is via the `TF_VAR_*` environment variables already stubbed out at the top of both [apply.sh](apply.sh) and [destroy.sh](destroy.sh):
+
+```bash
+export TF_VAR_dns_zone="datascience.acme.com"
+export TF_VAR_realm="DATASCIENCE.ACME.COM"
+export TF_VAR_netbios="DATASCIENCE"
+export TF_VAR_user_base_dn="CN=Users,DC=datascience,DC=acme,DC=com"
+```
+
+Uncomment those lines before running `apply.sh`, and uncomment the matching block in `destroy.sh` before tearing down — Terraform picks them up automatically across all phases with no changes to any `variables.tf` file required.
+
+The AD group names (e.g., `datascience-users`, `datascience-admins`) and the SSSD forced group are derived automatically from `TF_VAR_netbios` — no other changes are required.
+
 ### Clean Up  
 
 When finished, remove all resources with:  

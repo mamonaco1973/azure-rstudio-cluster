@@ -61,6 +61,7 @@ locals {
     vault_name  = data.azurerm_key_vault.ad_key_vault.name
     domain_fqdn = var.dns_zone
     nfs_gateway = azurerm_network_interface.nfs_gateway_nic.ip_configuration[0].private_ip_address
+    netbios     = var.netbios
   })
 }
 
