@@ -47,7 +47,11 @@ done
 echo "NOTE: [auth] managed identity login complete"
 
 echo "NOTE: [auth] fetching admin-ad-credentials from vault: ${vault_name}"
-secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name ${vault_name} --query value -o tsv)
+for i in {1..20}; do
+  secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name ${vault_name} --query value -o tsv 2>/dev/null) && break
+  echo "NOTE: [auth] vault not ready, attempt $i/10 — retrying in 15s"
+  sleep 15
+done
 echo "NOTE: [auth] secret fetched, extracting password"
 admin_password=$(echo "$secretsJson" | jq -r '.password')
 echo "NOTE: [auth] password length: $${#admin_password}"

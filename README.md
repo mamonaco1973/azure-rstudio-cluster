@@ -2,7 +2,7 @@
 
 Standing up a shared RStudio environment shouldn't take a week or cost a fortune.
 
-This project deploys a production-ready RStudio Server cluster on Azure — built for small teams that need a controlled, consistent R environment without the overhead of managing individual workstations or ad-hoc VMs. The whole stack deploys in one script and is up and running in about 30 minutes.
+This project deploys a production-ready RStudio Server cluster on Azure — built for small teams that need a controlled, consistent R environment without the overhead of managing individual workstations or ad-hoc VMs. The whole stack deploys in one script and is up and running in about 45 minutes.
 
 ![RStudio](rstudio.png)
 
