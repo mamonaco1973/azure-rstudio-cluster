@@ -131,6 +131,10 @@ resource "azurerm_linux_virtual_machine" "nfs_gateway" {
   identity {
     type = "SystemAssigned"
   }
+
+  lifecycle {
+    ignore_changes = [custom_data]
+  }
 }
 
 # ------------------------------------------------------------------------------
