@@ -5,6 +5,7 @@
 set -euo pipefail
 
 LOG=/root/rstudio_booter.log
+rm -f -r /root/userdata.log || true
 touch "$LOG"
 chmod 600 "$LOG"
 exec > >(tee -a "$LOG" | logger -t rstudio-booter -s 2>/dev/console) 2>&1
