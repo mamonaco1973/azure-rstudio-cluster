@@ -77,7 +77,7 @@ echo "NOTE: [nfs] done"
 # -- Section 5: Join Active Directory Domain --
 
 echo "NOTE: [auth] logging in with managed identity"
-for i in {1..10}; do
+for i in {1..20}; do
   az login --identity --allow-no-subscriptions && break
   echo "NOTE: [auth] managed identity not ready, attempt $i/10 — retrying in 15s"
   sleep 15
