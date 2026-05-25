@@ -233,10 +233,10 @@ echo "NOTE: [homedir] creating /etc/skel/nfs symlink"
 ln -s /nfs /etc/skel/nfs
 
 echo "NOTE: [homedir] seeding home directories for test users"
-su -c "exit" rpatel
-su -c "exit" jsmith
-su -c "exit" akumar
-su -c "exit" edavis
+su -c "exit" rpatel || true
+su -c "exit" jsmith || true
+su -c "exit" akumar || true
+su -c "exit" edavis || true
 
 echo "NOTE: [homedir] setting NFS directory ownership and permissions"
 chgrp ${force_group} /nfs
@@ -249,10 +249,10 @@ chmod 700 /home/*
 
 echo "NOTE: [homedir] cloning repo to /nfs"
 cd /nfs
-git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git
-chmod -R 775 azure-rstudio-cluster
-chgrp -R rstudio-users azure-rstudio-cluster
-chown -R ubuntu:ubuntu /home/ubuntu
+git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git || true
+chmod -R 775 azure-rstudio-cluster || true
+chgrp -R rstudio-users azure-rstudio-cluster || true
+chown -R ubuntu:ubuntu /home/ubuntu || true
 echo "NOTE: [homedir] done"
 
 echo "NOTE: custom-data complete: $(date -Is)"
