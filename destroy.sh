@@ -24,6 +24,15 @@
 set -e  # Exit immediately if any command fails
 
 # ------------------------------------------------------------------------------
+# Optional: Override AD domain settings
+# Must match the values used during apply.
+# ------------------------------------------------------------------------------
+# export TF_VAR_dns_zone="datascience.acme.com"
+# export TF_VAR_realm="DATASCIENCE.ACME.COM"
+# export TF_VAR_netbios="DATASCIENCE"
+# export TF_VAR_user_base_dn="CN=Users,DC=datascience,DC=acme,DC=com"
+
+# ------------------------------------------------------------------------------
 # Phase 1: Destroy Cluster Layer
 # - Removes RStudio VMSS, supporting infra, and NFS storage
 # - Deletes all custom RStudio images in the resource group

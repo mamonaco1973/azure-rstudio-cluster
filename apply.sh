@@ -29,6 +29,15 @@
 set -e  # Exit immediately on any unhandled command failure
 
 # ------------------------------------------------------------------------------
+# Optional: Override AD domain settings
+# Uncomment and modify to use a custom domain instead of the defaults.
+# ------------------------------------------------------------------------------
+# export TF_VAR_dns_zone="datascience.acme.com"
+# export TF_VAR_realm="DATASCIENCE.ACME.COM"
+# export TF_VAR_netbios="DATASCIENCE"
+# export TF_VAR_user_base_dn="CN=Users,DC=datascience,DC=acme,DC=com"
+
+# ------------------------------------------------------------------------------
 # Pre-flight Check: Validate environment
 # Runs `check_env.sh` to ensure:
 #   - Azure CLI is logged in and subscription is set
