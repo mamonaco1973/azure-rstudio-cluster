@@ -124,6 +124,7 @@ resource "azurerm_linux_virtual_machine" "nfs_gateway" {
     domain_fqdn     = var.dns_zone
     netbios         = var.netbios
     force_group     = "${lower(var.netbios)}-users"
+    admin_group     = "${lower(var.netbios)}-admins"
     realm           = var.realm
     storage_account = azurerm_storage_account.nfs_storage_account.name
   }))

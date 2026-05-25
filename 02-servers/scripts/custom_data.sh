@@ -1,6 +1,6 @@
 #!/bin/bash
 # custom_data.sh — NFS Gateway first-boot script
-# Terraform vars: ${storage_account} ${vault_name} ${domain_fqdn} ${netbios} ${realm} ${force_group}
+# Terraform vars: ${storage_account} ${vault_name} ${domain_fqdn} ${netbios} ${realm} ${force_group} ${admin_group}
 
 set -euo pipefail
 
@@ -245,7 +245,7 @@ su -c "exit" edavis || true
 echo "NOTE: [homedir] setting NFS directory ownership and permissions"
 chgrp ${force_group} /nfs || true 
 chgrp ${force_group} /nfs/data || true
-chgrp ${force_group} /nfs/rlibs || true
+chgrp ${admin_group} /nfs/rlibs || true
 chmod 2775 /nfs 
 chmod 2775 /nfs/rlibs
 chmod 2770 /nfs/data

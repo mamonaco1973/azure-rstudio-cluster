@@ -73,6 +73,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "rstudio_vmss" {
     netbios         = var.netbios
     realm           = var.realm
     force_group     = "${lower(var.netbios)}-users"
+    admin_group     = "${lower(var.netbios)}-admins"
   }))
 
   computer_name_prefix = "rstudio"

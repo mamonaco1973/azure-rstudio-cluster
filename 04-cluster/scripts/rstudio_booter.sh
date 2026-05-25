@@ -1,6 +1,6 @@
 #!/bin/bash
 # rstudio_booter.sh — RStudio VMSS first-boot script
-# Terraform vars: ${storage_account} ${vault_name} ${domain_fqdn} ${force_group}
+# Terraform vars: ${storage_account} ${vault_name} ${domain_fqdn} ${force_group} ${admin_group}
 
 set -euo pipefail
 
@@ -124,8 +124,8 @@ local({
   .libPaths(c(userlib, nfs, .libPaths()))
 })
 EOF
-echo "NOTE: [rlibs] setting ${lower(netbios)}-admins group on /nfs/rlibs"
-chgrp ${lower(netbios)}-admins /nfs/rlibs
+echo "NOTE: [rlibs] setting ${admin_group} group on /nfs/rlibs"
+chgrp ${admin_group} /nfs/rlibs
 echo "NOTE: [rlibs] done"
 
 echo "NOTE: rstudio-booter complete: $(date -Is)"
