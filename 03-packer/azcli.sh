@@ -29,4 +29,4 @@ https://packages.microsoft.com/ubuntu/22.04/prod jammy main" \
 echo "aznfs aznfs/enable_autoupdate boolean true" | sudo debconf-set-selections
 
 apt-get update -y
-apt-get install -y aznfs  >> /root/userdata.log 2>&1
+apt-get install -y aznfs  
