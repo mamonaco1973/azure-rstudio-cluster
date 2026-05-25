@@ -50,7 +50,7 @@ echo "NOTE: [auth] fetching admin-ad-credentials from vault: ${vault_name}"
 secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name ${vault_name} --query value -o tsv)
 echo "NOTE: [auth] secret fetched, extracting password"
 admin_password=$(echo "$secretsJson" | jq -r '.password')
-echo "NOTE: [auth] password length: ${#admin_password}"
+echo "NOTE: [auth] password length: $${#admin_password}"
 admin_username="Admin"
 
 echo "NOTE: [domain-join] domain: ${domain_fqdn}"
