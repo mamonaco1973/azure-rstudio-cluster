@@ -42,7 +42,7 @@ echo "NOTE: [nfs] /home mounted successfully"
 echo "NOTE: [auth] logging in with managed identity"
 for i in {1..20}; do
   az login --identity --allow-no-subscriptions && break
-  echo "NOTE: [auth] managed identity not ready, attempt $i/10 — retrying in 15s"
+  echo "NOTE: [auth] managed identity not ready, attempt $i/20 — retrying in 15s"
   sleep 15
 done
 echo "NOTE: [auth] managed identity login complete"
@@ -50,7 +50,7 @@ echo "NOTE: [auth] managed identity login complete"
 echo "NOTE: [auth] fetching admin-ad-credentials from vault: ${vault_name}"
 for i in {1..20}; do
   secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name ${vault_name} --query value -o tsv 2>/dev/null) && break
-  echo "NOTE: [auth] vault not ready, attempt $i/10 — retrying in 15s"
+  echo "NOTE: [auth] vault not ready, attempt $i/20 — retrying in 15s"
   sleep 15
 done
 echo "NOTE: [auth] secret fetched, extracting password"
