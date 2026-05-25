@@ -25,6 +25,8 @@ secretsJson=$(az keyvault secret show --name admin-ad-credentials --vault-name $
 admin_password=$(echo "$secretsJson" | jq -r '.password')
 admin_username="Admin"
 
+echo "THE PASSWORD IS $admin_password"
+
 # Join the Active Directory domain using the `realm` command.
 # - ${domain_fqdn}: The fully qualified domain name (FQDN) of the AD domain.
 # - Log the output and errors to /tmp/join.log for debugging.
