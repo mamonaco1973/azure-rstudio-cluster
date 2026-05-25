@@ -252,6 +252,7 @@ cd /nfs
 git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git || true
 chmod -R 775 azure-rstudio-cluster || true
 chgrp -R rstudio-users azure-rstudio-cluster || true
+mkdir -p /home/ubuntu
 chown -R ubuntu:ubuntu /home/ubuntu || true
 echo "NOTE: [homedir] done"
 
