@@ -1,192 +1,121 @@
-# Azure RStudio Cluster
+# RStudio Server Cluster on Azure: VM Scale Sets, Azure Files NFS and Active Directory
 
-Standing up a shared RStudio environment shouldn't take a week or cost a fortune.
+A shared **RStudio Server** cluster for small teams, built on the
+[Azure Mini Active Directory](https://github.com/mamonaco1973/azure-mini-ad)
+lab. An **Application Gateway** spreads users across a **VM Scale Set** of
+RStudio instances built from a **Packer** image; every instance joins a
+**mini-AD** domain, so users sign in with named AD accounts, and mounts a
+Premium **Azure Files NFS** share for home directories and a shared R
+package library. Admin-installed packages are available on every node at
+once. The whole stack deploys with one script in about 45 minutes.
 
-This project deploys a production-ready RStudio Server cluster on Azure — built for small teams that need a controlled, consistent R environment without the overhead of managing individual workstations or ad-hoc VMs. The whole stack deploys in one script and is up and running in about 45 minutes.
+![RStudio Server](rstudio.png)
 
-![RStudio](rstudio.png)
+| Piece | Where | Role |
+|---|---|---|
+| **rstudio-app-gateway** | `app-gateway-subnet` | Application Gateway Standard_v2 (capacity 1) on a public IP; HTTP 80 to 8787 with cookie-based affinity; health probe `/auth-sign-in` |
+| **rstudio-vmss** | `vm-subnet`, `rstudio-vmss-rg` | `Standard_D2s_v3` instances from the Packer image, default 2 (1 to 4); adds an instance when CPU is above 60%; automatic upgrade mode with a health extension |
+| **rstudio_image_&lt;timestamp&gt;** | `rstudio-vmss-rg` | Packer managed image: Ubuntu 24.04 with R, RStudio Server (open source), SSSD/realmd, `aznfs` and the Azure CLI |
+| **nfs&lt;suffix&gt;** | Storage, Premium FileStorage | NFS 4.1 share `nfs` (100 GiB) behind a private endpoint and the `privatelink.file.core.windows.net` zone |
+| **nfs-gateway-&lt;suffix&gt;** | `vm-subnet` | Ubuntu 24.04, `Standard_B1s`, public IP; joined to AD; mounts the share and serves `/nfs` over Samba |
+| **win-ad-&lt;suffix&gt;** | `vm-subnet` | Windows Server, `Standard_DS1_v2`, public IP; joined to AD; RSAT; maps the gateway's share as `Z:` |
+| **mini-AD** | `mini-ad-subnet` | [`module-azure-mini-ad`](https://github.com/mamonaco1973/module-azure-mini-ad) Samba DC for `rstudio.mikecloud.com` (`RSTUDIO`) |
+| **Key Vault** | `rstudio-network-rg` | admin, user and VM passwords; the VMs and scale set read them with their managed identities |
+| **ad-vnet** | `10.0.0.0/23`, Central US | `vm-subnet` `10.0.0.0/25`, `mini-ad-subnet` `10.0.0.128/25`, `app-gateway-subnet` `10.0.1.128/25`; Azure Bastion only if `bastion_support` is true |
 
-Users authenticate with named domain accounts, every node runs an identical environment, and R packages installed by admins are instantly available across the entire cluster via a shared Azure Files NFS mount.
+## Architecture
 
-### Key capabilities demonstrated:
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="architecture-dark.svg">
+  <img alt="RStudio users reach rstudio-app-gateway, a Standard_v2 Application Gateway on HTTP port 80 with cookie-based affinity, which forwards to port 8787 on the rstudio-vmss scale set, one to four Standard_D2s_v3 instances built from a Packer managed image. Each instance reads the AD join password from Key Vault with its managed identity, joins the mini-AD Samba domain controller with SSSD, and mounts the Premium Azure Files NFS share for /home and the shared R library /nfs/rlibs. Administrators RDP to the Windows admin VM, which maps the NFS gateway's SMB share as drive Z:; the gateway mounts the same share and is also joined to the domain." src="architecture-light.svg">
+</picture>
 
-1. **RStudio Server Cluster with Application Gateway** – RStudio Server (Open Source Edition) deployed across multiple VM instances, fronted by an Azure Application Gateway for high availability and seamless user access.
-2. **Azure Files-Backed Shared Library** – Azure Files share mounted at `/nfs/rlibs` and injected into `.libPaths()`, enabling shared R package storage across the cluster.
-3. **Built-in Authentication** – A lightweight Samba domain controller ships with the stack, providing named user logins and group-based permissions with no external identity service required.
+Regenerate with `python3 make_diagram.py`. The gateway and Windows VM also
+join the domain; those lines are left off the diagram to keep it readable.
 
-![Azure RStudio Cluster](azure-rstudio-cluster.png)  
-## Prerequisites  
+- **`01-directory/`**: the resource groups, VNet, subnets and NSG, optional
+  Bastion, Key Vault and its secrets, and the mini-AD DC with users and
+  groups from `scripts/users.json.template`.
+- **`02-servers/`**: the NFS storage account, share and private endpoint,
+  the gateway and Windows VMs.
+- **`03-packer/`**: the RStudio image (`rstudio_image.pkr.hcl` and its
+  install scripts).
+- **`04-cluster/`**: the Application Gateway, the scale set and its
+  autoscale setting, and `scripts/rstudio_booter.sh`.
+- **`05-rsamples/`**: sample R scripts and `packages.R`.
+- **`06-utils/`**: `getNextUID` / `getNextGID` scripts for adding AD users.
+
+## How an instance starts
+
+`rstudio_booter.sh` mounts the share as `/nfs` and its home directory area
+as `/home` with `aznfs`, reads the AD admin password from Key Vault, joins
+the domain with `realm join` (SSSD with short names and the POSIX IDs from
+AD), gives `linux-admins` passwordless sudo, and writes `Rprofile.site` so
+the library path is the user's own library, then `/nfs/rlibs`, then the
+system library. `/nfs/rlibs` belongs to `rstudio-admins`, so admins install
+packages once for everyone.
+
+## Users and groups
+
+| User | uidNumber | Groups | Notes |
+|---|---|---|---|
+| jsmith | 10001 | rstudio-users, us, linux-admins, rstudio-admins, Domain Admins | sudo; writes `/nfs/rlibs` |
+| edavis | 10002 | rstudio-users, us | |
+| rpatel | 10003 | rstudio-users, india, linux-admins, rstudio-admins, Domain Admins | sudo; writes `/nfs/rlibs` |
+| akumar | 10004 | rstudio-users, india | |
+
+| Group | gidNumber |
+|---|---|
+| rstudio-users | 10001 (every user's primary group) |
+| us | 10002 |
+| india | 10003 |
+| linux-admins | 10004 |
+| rstudio-admins | 10005 |
+
+Group names follow the NetBIOS name (`rstudio-users`, `rstudio-admins`).
+
+## Prerequisites
 
 * [An Azure Account](https://portal.azure.com/)
-* [Install AZ CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) 
-* [Install Latest Terraform](https://developer.hashicorp.com/terraform/install)
-* [Install Latest Packer](https://developer.hashicorp.com/packer/install)
+* [Install AZ CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+* [Install Terraform](https://developer.hashicorp.com/terraform/install)
+* [Install Packer](https://developer.hashicorp.com/packer/install)
+* [Install jq](https://jqlang.github.io/jq/download/)
 
-If this is your first time watching our content, we recommend starting with this video: [Azure + Terraform: Easy Setup](https://www.youtube.com/watch?v=wwi3kVgYNOk). It provides a step-by-step guide to properly configure Terraform, Packer, and the AZ CLI.
+`check_env.sh` expects a service principal in `ARM_CLIENT_ID`,
+`ARM_CLIENT_SECRET`, `ARM_SUBSCRIPTION_ID` and `ARM_TENANT_ID`. If this is
+your first time following along, we recommend starting with this video:
+[Azure + Terraform: Easy Setup](https://www.youtube.com/watch?v=wwi3kVgYNOk).
 
-## Build WorkFlow
-
-![Build WorkFlow](build-workflow.png)
-
-
-## Download this Repository  
+## Deploy
 
 ```bash
 git clone https://github.com/mamonaco1973/azure-rstudio-cluster.git
 cd azure-rstudio-cluster
-```  
+./apply.sh
+```
 
-## Build the Code  
+`apply.sh` applies `01-directory` and `02-servers`, builds the RStudio image
+with Packer, and applies `04-cluster` with the newest image. It ends by
+running `validate.sh`, which waits for a healthy backend behind the gateway
+and prints the endpoints:
 
-Run [check_env](check_env.sh) to validate your environment, then run [apply](apply.sh) to provision the infrastructure.  
+```
+============================================================================
+RStudio VMSS Quick Start - Validation Output (Azure)
+============================================================================
 
-```bash
-develop-vm:~/azure-rstudio-cluster$ ./apply.sh
-NOTE: Validating that required commands are in PATH.
-NOTE: az is found in the current PATH.
-NOTE: terraform is found in the current PATH.
-NOTE: All required commands are available.
-NOTE: Checking Azure CLI connection.
-NOTE: Successfully logged into Azure.
-Initializing provider plugins...
-Terraform has been successfully initialized!
-```  
+NOTE: Resource Group:        rstudio-vmss-rg
+NOTE: Network Group:         rstudio-network-rg
+NOTE: Key Vault:             ad-key-vault-<suffix>
 
-### Build Results  
+NOTE: Windows RDP Host:      win-ad-<suffix>.centralus.cloudapp.azure.com
+NOTE: NFS Gateway Host:      nfs-gateway-<suffix>.centralus.cloudapp.azure.com
 
-When the deployment completes, the following resources are created:  
+NOTE: RStudio URL:           http://rstudio-cluster-<suffix>.centralus.cloudapp.azure.com
+```
 
-- **Resource Groups:**  
-  - **rstudio-mini-ad-rg** - Mini-AD components
-  - **rstudio-network-rg** – Networking and Key Vault  
-  - **rstudio-servers-rg** – Domain-joined Linux/Windows servers and storage integration  
-  - **rstudio-vmss-rg** – RStudio VM Scale Set (VMSS), Application Gateway, and related cluster infra  
-
-- **Networking:**  
-  - A VNet with dedicated subnets for Active Directory, VMSS cluster nodes, and Application Gateway  
-  - NAT Gateway for deterministic outbound internet access  
-  - An `AzureBastionSubnet` is pre-provisioned; Azure Bastion deploys only when `bastion_support=true` (default: false)  
-
-- **Security & Identity:**  
-  - NSGs for domain controller, VMSS nodes, and storage endpoints  
-  - Azure Key Vault for credential storage (admin + user accounts)  
-  - Managed Identities for VMSS instances to retrieve secrets from Key Vault  
-
-- **Active Directory Server:**  
-  - Ubuntu VM running Samba 4 as Domain Controller and DNS server  
-  - Configured Kerberos realm and NetBIOS name for authentication  
-  - Administrator credentials securely stored in Key Vault  
-
-- **RStudio Cluster (VMSS):**  
-  - Linux VM Scale Set (VMSS) hosting RStudio Server nodes built from a Packer-generated custom image  
-  - Azure Application Gateway providing public access, load balancing, health probes, and cookie-based affinity  
-  - Autoscaling policies to add/remove RStudio nodes based on CPU utilization  
-
-- **Azure Files Storage:**  
-  - Premium Storage Account with SMB and NFS protocol enabled  
-  - File shares provisioned for shared R libraries (`/nfs/rlibs`) and user home directories  
-
-- **File Access Integration:**  
-  - RStudio VMSS instances mount the Azure Files NFS share for shared R libraries and project data  
-  - Domain-joined Windows clients (optional) can connect directly via SMB to the same Azure Files shares  
-  - This provides a unified storage backend across Linux (NFS) and Windows (SMB) clients  
-
-- **Sample R Workloads:**  
-  - Example R scripts (Monte Carlo, bell curve, surface plotting, etc.) included to validate the environment  
-
-### Users and Groups  
-
-The domain controller provisions **sample users and groups** via Terraform templates. These are intended for testing and demonstration.  
-
-#### Groups Created  
-
-| Group Name    | Category  | Scope     | gidNumber |
-|---------------|-----------|----------|-----------|
-| rstudio-users  | Security  | Universal | 10001 |
-| india         | Security  | Universal | 10002 |
-| us            | Security  | Universal | 10003 |
-| linux-admins  | Security  | Universal | 10004 |
-| rstudio-admins  | Security  | Universal | 10005 |
-
-#### Users Created  
-
-| Username | Full Name   | uidNumber | gidNumber | Groups Joined                    |
-|----------|-------------|-----------|-----------|----------------------------------|
-| jsmith   | John Smith  | 10001     | 10001     | rstudio-users, us, linux-admins, rstudio-admins  |
-| edavis   | Emily Davis | 10002     | 10001     | rstudio-users, us                 |
-| rpatel   | Raj Patel   | 10003     | 10001     | rstudio-users, india, linux-admins, rstudio-admins|
-| akumar   | Amit Kumar  | 10004     | 10001     | rstudio-users, india              |
-
-### Creating a New RStudio User
-
-Follow these steps to provision a new user in the Active Directory domain and validate their access to the RStudio cluster:
-
-1. **Connect to the Domain Controller**  
-   - Log into the **`win-ad`** server via RDP.
-   - Use the `rpatel` or `jsmith` credentials that were provisioned during cluster deployment.  
-
-2. **Launch Active Directory Users and Computers (ADUC)**  
-   - From the Windows Start menu, open **“Active Directory Users and Computers.”**  
-   - Enable **Advanced Features** under the **View** menu. This ensures you can access the extended attribute tabs (e.g., UID/GID mappings).  
-
-3. **Navigate to the Users Organizational Unit (OU)**  
-   - In the left-hand tree, expand the domain (e.g., `rstudio.mikecloud.com`).  
-   - Select the **Users** OU where all cluster accounts are managed.  
-
-4. **Create a New User Object**  
-   - Right-click the Users OU and choose **New → User.**  
-   - Provide the following:  
-     - **Full Name:** Descriptive user name (e.g., “Mike Cloud”).  
-     - **User Logon Name (User Principal Name / UPN):** e.g., `mcloud@rstudio.mikecloud.com`.  
-     - **Initial Password:** Set an initial password.
-
-![Windows](windows.png)
-
-5. **Assign a Unique UID Number**  
-   - Open **PowerShell** on the AD server.  
-   - Run the script located at:  
-     ```powershell
-     Z:\nfs\azure-rstudio-cluster\06-utils\getNextUID.bat
-     ```  
-   - This script returns the next available **`uidNumber`** to assign to the new account.  
-
-6. **Configure Advanced Attributes**  
-   - In the new user’s **Properties** dialog, open the **Attribute Editor** tab.  
-   - Set the following values:  
-     - `gidNumber` → **10001** (the shared GID for the `rstudio-users` group).  
-     - `uid` → match the user’s AD login ID (e.g., `rpatel`).  
-     - `uidNumber` → the unique numeric value returned from `getNextUID.ps1`.  
-
-7. **Add Group Memberships**  
-   - Go to the **Member Of** tab.  
-   - Add the user to the following groups:  
-     - **rstudio-users** → grants standard RStudio access.  
-     - **us** (or other geographic/departmental group as applicable).  
-
-8. **Validate User on Linux**  
-   - Open an **SSH** session to the **`nfs-gateway`** instance.  
-   - Run the following command to confirm the user’s identity mapping:  
-     ```bash
-     id mcloud
-     ```  
-   - Verify that the output shows the correct **UID**, **GID**, and group memberships (e.g., `rstudio-users`).  
-
-![Linux](linux.png)
-
-9. **Validate RStudio Access**  
-   - Open the RStudio cluster’s Application Gateway's URL in a browser (e.g., `http://rstudio-cluster-xxxxx.centralus.cloudapp.azure.com/`).  
-   - Log in with the new AD credentials.  
-
-10. **Verify Permissions**  
-   - By default, the new user is **not** a member of the `rstudio-admins` group.  
-   - Attempting to install packages into the **shared library path `/nfs/rlibs`** should fail with a **”Permission denied”** error.  
-   - This confirms the user is restricted to installing packages in their **personal user library** only.  
-
----
-
-✅ **Note:** If you need the user to have administrative rights (e.g., the ability to install packages into the shared library), add them to the **rstudio-admins** group in addition to `rstudio-users`.
-
-### Changing the Domain Name
+### Changing the domain name
 
 The default domain is `rstudio.mikecloud.com`. The recommended way to override it is via the `TF_VAR_*` environment variables already stubbed out at the top of both [apply.sh](apply.sh) and [destroy.sh](destroy.sh):
 
@@ -201,14 +130,46 @@ Uncomment those lines before running `apply.sh`, and uncomment the matching bloc
 
 The AD group names (e.g., `datascience-users`, `datascience-admins`) and the SSSD forced group are derived automatically from `TF_VAR_netbios` — no other changes are required.
 
-### Clean Up  
+## Try it
 
-When finished, remove all resources with:  
+1. Open the **RStudio URL** and sign in as one of the users above, with the
+   password from its secret in Key Vault.
+2. Open a sample from `05-rsamples`; the gateway clones this repository
+   into the share.
+3. Add a user:
+   1. RDP to the **Windows RDP Host** as `jsmith` or `rpatel` and open
+      **Active Directory Users and Computers** with **View > Advanced
+      Features** on.
+   2. Under the domain's **Users** container, create the user with a UPN
+      such as `mcloud@rstudio.mikecloud.com` and an initial password.
+
+      ![New user in Active Directory Users and Computers](windows.png)
+
+   3. Run `Z:\azure-rstudio-cluster\06-utils\getNextUID.bat` for the next
+      free `uidNumber`.
+   4. In **Attribute Editor**, set `uidNumber` to that value, `gidNumber` to
+      `10001`, and `uid` to the login name.
+   5. Under **Member Of**, add `rstudio-users` and any other groups.
+   6. SSH to the **NFS Gateway Host** and check the mapping with
+      `id mcloud`:
+
+      ![id output on the Linux gateway](linux.png)
+
+   7. Sign in to RStudio as the new user. They can't write `/nfs/rlibs`
+      until they're in `rstudio-admins`.
+
+## Teardown
 
 ```bash
 ./destroy.sh
-```  
+```
 
-This uses Terraform to delete the VNet, VMs, Key Vault, storage accounts, NSGs, and secrets.  
+## Notes
 
-
+- **Lab only.** RStudio is served over plain HTTP. The VM network security
+  group allows 22, 3389, 445, 8787 and 80 from anywhere, and the gateway and
+  Windows VM have public IPs.
+- The autoscale setting only has a scale-out rule, so the scale set grows to
+  4 instances under load and doesn't shrink back on its own.
+- The old README listed `india` as 10002 and `us` as 10003; the template
+  sets `us` to 10002 and `india` to 10003.
